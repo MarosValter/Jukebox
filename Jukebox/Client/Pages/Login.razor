@@ -1,0 +1,56 @@
+﻿@inject NavigationManager NavigationManager
+
+<MatCard>
+    <MatIconButton Icon="home" Link="/" Class="float-right"></MatIconButton>
+    <div class="logo">
+        <a href="/" title="jukebox"><img src="images/blazorboilerplate.svg" style="width:100px;" title="jukebox" alt="jukebox" /><br />jukebox</a>
+        <br />
+        <h4>
+            Enter
+            @if (string.IsNullOrEmpty(RoomName))
+            {
+                @("room")
+            }
+            else
+            {
+                <strong>@RoomName</strong>
+            }
+        </h4>
+    </div>
+    <EditForm Model="@_loginParameters" OnValidSubmit="@SubmitLogin">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <fieldset>
+            <div class="form-group">
+                <MatTextField @bind-Value="@_loginParameters.UserName" Label="User Name" Icon="person" IconTrailing="true" FullWidth="true" Required="true"></MatTextField>
+            </div>
+            @if (string.IsNullOrEmpty(RoomName))
+            {
+                <div class="form-group">
+                    <MatTextField @bind-Value="@_loginParameters.RoomName" Label="Room" Icon="lock_outline" IconTrailing="true" FullWidth="true" Required="true"></MatTextField>
+                </div>
+            }
+            <div class="form-group">
+                <MatButton class="float-right" Type="submit" Raised="true">Login</MatButton>
+            </div>
+        </fieldset>
+    </EditForm>
+</MatCard>
+
+@code {
+    [Parameter]
+    public string RoomName { get; set; }
+
+    private readonly LoginParameters _loginParameters = new LoginParameters();
+
+    void SubmitLogin()
+    {
+        NavigationManager.NavigateTo($"/{_loginParameters.RoomName ?? RoomName}/{_loginParameters.UserName}");
+    }
+
+    private class LoginParameters
+    {
+        public string RoomName { get; set; }
+        public string UserName { get; set; }
+    }
+}

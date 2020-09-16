@@ -1,0 +1,147 @@
+﻿@using Jukebox.Shared.Player
+@using Microsoft.AspNetCore.SignalR.Client
+
+@implements IAsyncDisposable
+
+@inject NavigationManager NavigationManager
+
+<MatH2 Class="text-center pb-5">Room: @RoomName</MatH2>
+
+<div class="mat-layout-grid">
+    <div class="mat-layout-grid-inner">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
+            <MatH5>Songs</MatH5>
+            <hr/>
+            <MatList Class="mat-elevation-z6">
+                @if (Room != null)
+                {
+                    foreach (var (song, i) in Room.Playlist.Songs.Select((song, index) => (song, index)))
+                    {
+                        <MatListItem>
+                            <MatListItemText>
+                                <MatListItemPrimaryText>@song.Name </MatListItemPrimaryText>
+                                <MatListItemSecondaryText>@song.Author </MatListItemSecondaryText>
+                            </MatListItemText>
+                        </MatListItem>
+                        if (i < Room.Playlist.Songs.Count - 1)
+                        {
+                            <MatDivider></MatDivider>
+                        }
+                    }
+                }
+            </MatList>
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
+            <MatTabGroup Class="mat-elevation-z6">
+                <MatTab Label="Users">
+                    <MatList>
+                        @if (Room != null)
+                        {
+                            foreach (var (user, i) in Room.Users.Select((user, index) => (user, index)))
+                            {
+                                <MatListItem Disabled="@(user.ConnectionId == User?.ConnectionId)">
+                                    <MatListItemText>
+                                        <MatListItemPrimaryText>@user.Name</MatListItemPrimaryText>
+                                    </MatListItemText>
+                                </MatListItem>
+                                if (i < Room.Users.Count - 1)
+                                {
+                                    <MatDivider></MatDivider>
+                                }
+                            }
+                        }
+                    </MatList>
+                </MatTab>
+                <MatTab Label="Chat">
+
+                </MatTab>
+                <MatTab Label="YouTube">
+
+                </MatTab>
+                <MatTab Label="Spitify">
+
+                </MatTab>
+            </MatTabGroup>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string RoomName { get; set; }
+
+    [Parameter]
+    public string UserName { get; set; }
+
+    public UserInfo User { get; set; }
+
+    public RoomInfo Room { get; set; }
+
+
+    private HubConnection _hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/jukeboxHub"))
+            .Build();
+
+        _hubConnection.On<string, RoomInfo>("RoomEntered", RoomEntered);
+        _hubConnection.On<UserInfo>("UserAdded", UserAdded);
+        _hubConnection.On<string>("UserRemoved", UserRemoved);
+        _hubConnection.On<SongInfo>("SongAdded", SongAdded);
+        _hubConnection.On<SongInfo>("SongRemoved", SongRemoved);
+
+        await _hubConnection.StartAsync();
+
+        await _hubConnection.SendAsync("EnterRoom", RoomName, UserName);
+    }
+
+    private void RoomEntered(string connectionId, RoomInfo room)
+    {
+        User = new UserInfo
+        {
+            Name = UserName,
+            ConnectionId = connectionId
+        };
+        Room = room;
+        StateHasChanged();
+        Console.WriteLine("Room entered with connectionId: {0}", connectionId);
+    }
+
+    private void UserAdded(UserInfo user)
+    {
+        Room.Users.Add(user);
+        StateHasChanged();
+        Console.WriteLine("New user added : {0} ({1})", user.Name, user.ConnectionId);
+    }
+
+    private void UserRemoved(string connectionId)
+    {
+        Room.Users.RemoveAt(Room.Users.FindIndex(x => x.ConnectionId == connectionId));
+        StateHasChanged();
+        Console.WriteLine("User leaved : {0}", connectionId);
+    }
+
+    private void SongAdded(SongInfo song)
+    {
+        Room.Playlist.Songs.Add(song);
+        StateHasChanged();
+    }
+
+    private void SongRemoved(SongInfo song)
+    {
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _hubConnection.SendAsync("LeaveRoom", RoomName);
+        await _hubConnection.StopAsync();
+        await _hubConnection.DisposeAsync();
+        Console.WriteLine("Room leaved");
+    }
+
+}

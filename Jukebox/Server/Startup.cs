@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
+using Jukebox.Server.Hubs;
+using Jukebox.Server.Storage;
 
 namespace Jukebox.Server
 {
@@ -22,8 +24,14 @@ namespace Jukebox.Server
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IRoomStorage, InMemoryRoomStorage>();
 
             services.AddControllersWithViews();
+            services.AddSignalR();
+            services.AddResponseCompression(options =>
+            {
+                options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] {"application/octet-stream"});
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -50,6 +58,7 @@ namespace Jukebox.Server
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<JukeboxHub>("/jukeboxHub");
                 endpoints.MapFallbackToFile("index.html");
             });
         }
