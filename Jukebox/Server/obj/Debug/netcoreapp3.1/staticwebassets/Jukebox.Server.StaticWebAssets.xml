@@ -1,4 +1,0 @@
-﻿<StaticWebAssets Version="1.0">
-  <ContentRoot BasePath="/" Path="D:\Projects\jukebox\Jukebox\Client\wwwroot\" />
-  <ContentRoot BasePath="/" Path="D:\Projects\jukebox\Jukebox\Client\bin\Debug\netstandard2.1\wwwroot\" />
-</StaticWebAssets>

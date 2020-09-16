@@ -69,6 +69,20 @@ using Jukebox.Client.Shared;
 #line default
 #line hidden
 #nullable disable
+#nullable restore
+#line 9 "D:\Projects\jukebox\Jukebox\Client\_Imports.razor"
+using Jukebox.Client.Shared.Layouts;
+
+#line default
+#line hidden
+#nullable disable
+#nullable restore
+#line 10 "D:\Projects\jukebox\Jukebox\Client\_Imports.razor"
+using MatBlazor;
+
+#line default
+#line hidden
+#nullable disable
     [Microsoft.AspNetCore.Components.RouteAttribute("/counter")]
     public partial class Counter : Microsoft.AspNetCore.Components.ComponentBase
     {

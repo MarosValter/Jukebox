@@ -1,9 +1,0 @@
-D:\Projects\jukebox\Jukebox\Shared\bin\Debug\netstandard2.1\Jukebox.Shared.deps.json
-D:\Projects\jukebox\Jukebox\Shared\bin\Debug\netstandard2.1\Jukebox.Shared.dll
-D:\Projects\jukebox\Jukebox\Shared\bin\Debug\netstandard2.1\Jukebox.Shared.pdb
-D:\Projects\jukebox\Jukebox\Shared\obj\Debug\netstandard2.1\Jukebox.Shared.csprojAssemblyReference.cache
-D:\Projects\jukebox\Jukebox\Shared\obj\Debug\netstandard2.1\Jukebox.Shared.csproj.CoreCompileInputs.cache
-D:\Projects\jukebox\Jukebox\Shared\obj\Debug\netstandard2.1\Jukebox.Shared.AssemblyInfoInputs.cache
-D:\Projects\jukebox\Jukebox\Shared\obj\Debug\netstandard2.1\Jukebox.Shared.AssemblyInfo.cs
-D:\Projects\jukebox\Jukebox\Shared\obj\Debug\netstandard2.1\Jukebox.Shared.dll
-D:\Projects\jukebox\Jukebox\Shared\obj\Debug\netstandard2.1\Jukebox.Shared.pdb
