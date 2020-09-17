@@ -1,0 +1,15 @@
+﻿
+@inject IJSRuntime JsRuntime
+
+<div id="yt-player"></div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await new Player.YouTubePlayer(JsRuntime).Initialize("yt-player");
+            Console.WriteLine("YouTube player created");
+        }
+    }
+}

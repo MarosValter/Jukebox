@@ -11,6 +11,6 @@ namespace Jukebox.Server.Storage
         Task<bool> RemoveUserAsync(string roomName, string connectionId);
 
         Task AddSongAsync(string roomName, SongInfo song);
-        Task RemoveSongAsync(string roomName, SongInfo song);
+        Task<bool> RemoveSongAsync(string roomName, SongInfo song);
     }
 }

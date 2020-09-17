@@ -1,0 +1,81 @@
+﻿@using Jukebox.Player.Search
+@using Jukebox.Player
+@using Jukebox.Shared.Player
+@using Microsoft.AspNetCore.SignalR.Client
+
+@*@inject NavigationManager NavigationManager*@
+@inject ISearchEngineProvider SearchEngineProvider
+
+<div class="">
+    <p class="flex-row">
+        <MatTextField @bind-Value="@_queryText" Label="Search text" Outlined="true" FullWidth="true"></MatTextField>
+        <MatButton TrailingIcon="@MatIconNames.Search" OnClick="@Search" Disabled="@_searching">Search</MatButton>
+    </p>
+    <MatH6>Results:</MatH6>
+    <MatList>
+        @foreach (var (result, i) in _results.Select((result, i) => (result, i)))
+        {
+            <MatListItem Class="my-1">
+                <img src="@result.ThumbnailUrl" width="120" height="90" />
+                @result.Title
+                <MatIconButton Class="float-right" Icon="@MatIconNames.Playlist_add" OnClick="async () => await AddSong(result.Id)"></MatIconButton>
+            </MatListItem>
+            if (i < _results.Count - 1)
+            {
+                <MatDivider></MatDivider>
+            }
+        }
+    </MatList>
+</div>
+
+@code
+{
+    [Parameter]
+    public PlayerType Type { get; set; } = PlayerType.None;
+
+    [Parameter]
+    public string RoomName { get; set; }
+
+    [Parameter]
+    public HubConnection HubConnection { get; set; }
+
+    private ISearchEngine _searchEngine;
+
+    private bool _searching;
+    private string _queryText;
+    private IList<SearchResultInfo> _results = new List<SearchResultInfo>();
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        _searchEngine = SearchEngineProvider.GetSearchEngine(Type);
+    }
+
+    private async Task Search()
+    {
+        if (!string.IsNullOrEmpty(_queryText))
+        {
+            _searching = true;
+            _results = await _searchEngine.Search(_queryText, 10);
+            _searching = false;
+        }
+    }
+
+    private async Task AddSong(string id)
+    {
+        var result = _results.FirstOrDefault(x => x.Id == id);
+        if (result == null)
+        {
+            return;
+        }
+
+        var song = new SongInfo
+        {
+            Id = result.Id,
+            Name = result.Title,
+            Type = Type
+
+        };
+        await HubConnection.SendAsync("AddSong", RoomName, song);
+    }
+}

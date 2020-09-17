@@ -1,0 +1,27 @@
+﻿@using Jukebox.Shared.Player
+
+<MatList>
+    @if (RoomInfo != null)
+    {
+        foreach (var (user, i) in RoomInfo.Users.Select((user, index) => (user, index)))
+        {
+            <MatListItem Disabled="@(user.ConnectionId == User?.ConnectionId)">
+                <MatListItemText>
+                    <MatListItemPrimaryText>@user.Name</MatListItemPrimaryText>
+                </MatListItemText>
+            </MatListItem>
+            if (i < RoomInfo.Users.Count - 1)
+            {
+                <MatDivider></MatDivider>
+            }
+        }
+    }
+</MatList>
+
+@code {
+    [Parameter]
+    public RoomInfo RoomInfo { get; set; }
+
+    [Parameter]
+    public UserInfo User { get; set; }
+}

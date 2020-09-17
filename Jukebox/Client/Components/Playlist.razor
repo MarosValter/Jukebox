@@ -1,0 +1,51 @@
+﻿@using Jukebox.Shared.Player
+@using Microsoft.AspNetCore.SignalR.Client
+
+@if (PlaylistInfo != null)
+{
+    <MatList>
+        @foreach (var (song, i) in PlaylistInfo.AllSongs.Select((song, index) => (song, index)))
+        {
+            <MatListItem>
+                @if (PlaylistInfo.CurrentSong == song)
+                {
+                    <MatIcon Icon="@MatIconNames.Play_circle_filled"></MatIcon>
+                }
+                <MatListItemText>
+                    <MatListItemPrimaryText>@song.Name </MatListItemPrimaryText>
+                    <MatListItemSecondaryText>@song.Author </MatListItemSecondaryText>
+                </MatListItemText>
+                <MatIconButton Class="float-right" Icon="@MatIconNames.Delete" Disabled="!PlaylistInfo.NextSongs.Contains(song)" OnClick="async () => await RemoveSong(song)"></MatIconButton>
+            </MatListItem>
+            if (i < PlaylistInfo.AllSongs.Count - 1)
+            {
+                <MatDivider></MatDivider>
+            }
+        }
+        @if (!PlaylistInfo.AllSongs.Any())
+        {
+            <MatListItem><em>empty</em></MatListItem>
+        }
+    </MatList>
+}
+
+@code {
+    [Parameter]
+    public string RoomName { get; set; }
+
+    [Parameter]
+    public PlaylistInfo PlaylistInfo { get; set; }
+
+    [Parameter]
+    public HubConnection HubConnection { get; set; }
+
+    private async Task RemoveSong(SongInfo song)
+    {
+        if (!PlaylistInfo.NextSongs.Contains(song))
+        {
+            return;
+        }
+
+        await HubConnection.SendAsync("RemoveSong", RoomName, song);
+    }
+}

@@ -1,64 +1,53 @@
-﻿@using Jukebox.Shared.Player
+﻿@page "/{roomName}/{userName}"
+
+@using Jukebox.Shared.Player
 @using Microsoft.AspNetCore.SignalR.Client
+@using Jukebox.Player
 
 @implements IAsyncDisposable
 
 @inject NavigationManager NavigationManager
+
+@inject IJSRuntime JsRuntime
 
 <MatH2 Class="text-center pb-5">Room: @RoomName</MatH2>
 
 <div class="mat-layout-grid">
     <div class="mat-layout-grid-inner">
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
-            <MatH5>Songs</MatH5>
-            <hr/>
-            <MatList Class="mat-elevation-z6">
-                @if (Room != null)
-                {
-                    foreach (var (song, i) in Room.Playlist.Songs.Select((song, index) => (song, index)))
-                    {
-                        <MatListItem>
-                            <MatListItemText>
-                                <MatListItemPrimaryText>@song.Name </MatListItemPrimaryText>
-                                <MatListItemSecondaryText>@song.Author </MatListItemSecondaryText>
-                            </MatListItemText>
-                        </MatListItem>
-                        if (i < Room.Playlist.Songs.Count - 1)
-                        {
-                            <MatDivider></MatDivider>
-                        }
-                    }
-                }
-            </MatList>
+            <MatAccordion>
+                <MatExpansionPanel Class="mat-elevation-z6">
+                    <MatExpansionPanelSummary>
+                        <MatExpansionPanelHeader>Media</MatExpansionPanelHeader>
+                    </MatExpansionPanelSummary>
+                    <MatExpansionPanelDetails>
+                        <Player Playlist="@RoomInfo?.Playlist"></Player>
+                    </MatExpansionPanelDetails>
+                </MatExpansionPanel>
+            </MatAccordion>
+            <MatAccordion>
+                <MatExpansionPanel @bind-Expanded="@_playlistOpened" Class="mat-elevation-z6">
+                    <MatExpansionPanelSummary>
+                        <MatExpansionPanelHeader>Playlist</MatExpansionPanelHeader>
+                    </MatExpansionPanelSummary>
+                    <MatExpansionPanelDetails>
+                        <Playlist PlaylistInfo="@RoomInfo?.Playlist" RoomName="@RoomName" HubConnection="@_hubConnection"></Playlist>
+                    </MatExpansionPanelDetails>
+                </MatExpansionPanel>
+            </MatAccordion>
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
             <MatTabGroup Class="mat-elevation-z6">
                 <MatTab Label="Users">
-                    <MatList>
-                        @if (Room != null)
-                        {
-                            foreach (var (user, i) in Room.Users.Select((user, index) => (user, index)))
-                            {
-                                <MatListItem Disabled="@(user.ConnectionId == User?.ConnectionId)">
-                                    <MatListItemText>
-                                        <MatListItemPrimaryText>@user.Name</MatListItemPrimaryText>
-                                    </MatListItemText>
-                                </MatListItem>
-                                if (i < Room.Users.Count - 1)
-                                {
-                                    <MatDivider></MatDivider>
-                                }
-                            }
-                        }
-                    </MatList>
+                    <UserList RoomInfo="@RoomInfo" User="@User"></UserList>
                 </MatTab>
                 <MatTab Label="Chat">
 
                 </MatTab>
                 <MatTab Label="YouTube">
-
+                    <SearchList Type="@PlayerType.YouTube" RoomName="@RoomName" HubConnection="@_hubConnection"></SearchList>
                 </MatTab>
-                <MatTab Label="Spitify">
+                <MatTab Label="Spotify">
 
                 </MatTab>
             </MatTabGroup>
@@ -75,10 +64,12 @@
 
     public UserInfo User { get; set; }
 
-    public RoomInfo Room { get; set; }
+    public RoomInfo RoomInfo { get; set; }
 
 
     private HubConnection _hubConnection;
+
+    private bool _playlistOpened;
 
     protected override async Task OnInitializedAsync()
     {
@@ -106,33 +97,34 @@
             Name = UserName,
             ConnectionId = connectionId
         };
-        Room = room;
+        RoomInfo = room;
         StateHasChanged();
         Console.WriteLine("Room entered with connectionId: {0}", connectionId);
     }
 
     private void UserAdded(UserInfo user)
     {
-        Room.Users.Add(user);
+        RoomInfo.Users.Add(user);
         StateHasChanged();
         Console.WriteLine("New user added : {0} ({1})", user.Name, user.ConnectionId);
     }
 
     private void UserRemoved(string connectionId)
     {
-        Room.Users.RemoveAt(Room.Users.FindIndex(x => x.ConnectionId == connectionId));
+        RoomInfo.Users.RemoveAt(RoomInfo.Users.FindIndex(x => x.ConnectionId == connectionId));
         StateHasChanged();
         Console.WriteLine("User leaved : {0}", connectionId);
     }
 
     private void SongAdded(SongInfo song)
     {
-        Room.Playlist.Songs.Add(song);
+        RoomInfo.Playlist.AllSongs.Add(song);
         StateHasChanged();
     }
 
     private void SongRemoved(SongInfo song)
     {
+        RoomInfo.Playlist.AllSongs.RemoveAt(RoomInfo.Playlist.AllSongs.FindIndex(x => x.Id == song.Id && x.Type == song.Type));
         StateHasChanged();
     }
 

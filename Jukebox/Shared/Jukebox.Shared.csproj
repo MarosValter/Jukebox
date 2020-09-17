@@ -4,4 +4,13 @@
     <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MatBlazor" Version="2.7.0-develop-017" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jukebox.Player.YouTube\Jukebox.Player.YouTube.csproj" />
+    <ProjectReference Include="..\Jukebox.Player\Jukebox.Player.csproj" />
+  </ItemGroup>
+
 </Project>

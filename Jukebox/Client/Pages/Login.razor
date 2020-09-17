@@ -1,4 +1,9 @@
-﻿@inject NavigationManager NavigationManager
+﻿@page "/"
+@page "/{roomName}"
+
+@layout LoginLayout
+
+@inject NavigationManager NavigationManager
 
 <MatCard>
     <MatIconButton Icon="home" Link="/" Class="float-right"></MatIconButton>

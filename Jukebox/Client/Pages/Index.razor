@@ -1,27 +1,6 @@
-﻿@page "/"
-@page "/{roomName}"
-@page "/{roomName}/{userName}"
+﻿
 
-@if (string.IsNullOrEmpty(RoomName) || string.IsNullOrEmpty(UserName))
-{
-    <div class="login-container">
-        <Background></Background>
-        <div class="login-body">
-            <Login RoomName="@RoomName"></Login>
-        </div>
-    </div>
-}
-else
-{
-    <section class="container-fluid">
-        <Player RoomName="@RoomName" UserName="@UserName"></Player>
-    </section>
-    <footer class="page-footer">
-        <div class="flex-1">
-            © 2020 jukebox Version 0.1 - Developed by pux
-        </div>
-    </footer>
-}
+@*<Room RoomName="@RoomName" UserName="@UserName"></Room>*@
 
 @code {
 

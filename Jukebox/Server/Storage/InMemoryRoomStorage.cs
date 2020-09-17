@@ -26,7 +26,7 @@ namespace Jukebox.Server.Storage
         {
             if (!_rooms.ContainsKey(roomName))
             {
-                throw new InvalidOperationException("No room found.");
+                throw new InvalidOperationException("Room not found.");
             }
 
             bool result;
@@ -51,7 +51,7 @@ namespace Jukebox.Server.Storage
         {
             if (!_rooms.ContainsKey(roomName))
             {
-                throw new InvalidOperationException("No room found.");
+                throw new InvalidOperationException("Room not found.");
             }
 
             bool result;
@@ -75,12 +75,43 @@ namespace Jukebox.Server.Storage
 
         public Task AddSongAsync(string roomName, SongInfo song)
         {
-            throw new System.NotImplementedException();
+            if (!_rooms.ContainsKey(roomName))
+            {
+                throw new InvalidOperationException("Room not found.");
+            }
+
+            var room = _rooms[roomName];
+            lock (room)
+            {
+                room.Playlist.AllSongs.Add(song);
+            }
+
+            return Task.CompletedTask;
         }
 
-        public Task RemoveSongAsync(string roomName, SongInfo song)
+        public Task<bool> RemoveSongAsync(string roomName, SongInfo song)
         {
-            throw new System.NotImplementedException();
+            if (!_rooms.ContainsKey(roomName))
+            {
+                throw new InvalidOperationException("Room not found.");
+            }
+
+            bool result;
+            var room = _rooms[roomName];
+            lock (room)
+            {
+                if (room.Playlist.NextSongs.Any(x => x.Id == song.Id && x.Type == song.Type))
+                {
+                    room.Playlist.AllSongs.RemoveAt(room.Playlist.AllSongs.FindIndex(x => x.Id == song.Id && x.Type == song.Type));
+                    result = true;
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+
+            return Task.FromResult(result);
         }
     }
 }

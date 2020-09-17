@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Client\Jukebox.Client.csproj" />
+    <ProjectReference Include="..\Jukebox.Player\Jukebox.Player.csproj" />
     <ProjectReference Include="..\Shared\Jukebox.Shared.csproj" />
   </ItemGroup>
 

@@ -1,9 +1,10 @@
 ﻿using System.Threading.Tasks;
+using Jukebox.Player;
 using Jukebox.Shared.Player;
 
 namespace Jukebox.Shared.Client
 {
-    public interface IJukeboxClient
+    public interface IJukeboxClient// : IPlayer
     {
         Task RoomEntered(string connectionId, RoomInfo room);
 

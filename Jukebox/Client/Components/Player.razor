@@ -1,0 +1,19 @@
+﻿@using Jukebox.Shared.Player
+@using Jukebox.Player
+@using Jukebox.Player.Manager
+
+@inject IPlayerManager Manager
+
+Type: @Playlist?.CurrentSong?.Type
+@if (Playlist?.CurrentSong?.Type == PlayerType.YouTube)
+{
+    <YouTubePlayer></YouTubePlayer>
+}
+
+@code {
+    [Parameter]
+    public PlaylistInfo Playlist { get; set; }
+
+    private IPlayer CurrentPlayer => Playlist?.CurrentSong != null ? Manager.GetPlayer(Playlist.CurrentSong.Type) : null;
+
+}

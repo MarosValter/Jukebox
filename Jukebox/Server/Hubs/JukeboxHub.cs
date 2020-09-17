@@ -42,14 +42,16 @@ namespace Jukebox.Server.Hubs
 
         public async Task AddSong(string roomName, SongInfo song)
         {
-            await Clients.Group(roomName).SongAdded(song);
             await _roomStorage.AddSongAsync(roomName, song);
+            await Clients.Group(roomName).SongAdded(song);
         }
 
         public async Task RemoveSong(string roomName, SongInfo song)
         {
-            await Clients.Group(roomName).SongRemoved(song);
-            await _roomStorage.RemoveSongAsync(roomName, song);
+            if (await _roomStorage.RemoveSongAsync(roomName, song))
+            {
+                await Clients.Group(roomName).SongRemoved(song);
+            }
         }
     }
 }
