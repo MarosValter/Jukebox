@@ -12,8 +12,8 @@
                     <MatIcon Icon="@MatIconNames.Play_circle_filled"></MatIcon>
                 }
                 <MatListItemText>
-                    <MatListItemPrimaryText>@song.Name </MatListItemPrimaryText>
-                    <MatListItemSecondaryText>@song.Author </MatListItemSecondaryText>
+                    <MatListItemPrimaryText>@song.Name</MatListItemPrimaryText>
+                    <MatListItemSecondaryText>@song.Duration.ToString("g")</MatListItemSecondaryText>
                 </MatListItemText>
                 <MatIconButton Class="float-right" Icon="@MatIconNames.Delete" Disabled="!PlaylistInfo.NextSongs.Contains(song)" OnClick="async () => await RemoveSong(song)"></MatIconButton>
             </MatListItem>

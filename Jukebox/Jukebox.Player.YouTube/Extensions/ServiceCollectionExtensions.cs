@@ -11,7 +11,7 @@ namespace Jukebox.Player.YouTube.Extensions
             // register search engine http client
             services.AddHttpClient(YouTubeSearchEngine.ClientName, (client) =>
             {
-                client.BaseAddress = new Uri("https://www.googleapis.com/");
+                client.BaseAddress = new Uri("https://www.googleapis.com/youtube/v3/");
             });
 
             return services;

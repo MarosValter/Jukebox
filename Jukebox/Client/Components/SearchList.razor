@@ -2,30 +2,36 @@
 @using Jukebox.Player
 @using Jukebox.Shared.Player
 @using Microsoft.AspNetCore.SignalR.Client
+@using System.Globalization
 
-@*@inject NavigationManager NavigationManager*@
 @inject ISearchEngineProvider SearchEngineProvider
 
-<div class="">
-    <p class="flex-row">
-        <MatTextField @bind-Value="@_queryText" Label="Search text" Outlined="true" FullWidth="true"></MatTextField>
-        <MatButton TrailingIcon="@MatIconNames.Search" OnClick="@Search" Disabled="@_searching">Search</MatButton>
-    </p>
-    <MatH6>Results:</MatH6>
-    <MatList>
-        @foreach (var (result, i) in _results.Select((result, i) => (result, i)))
-        {
-            <MatListItem Class="my-1">
-                <img src="@result.ThumbnailUrl" width="120" height="90" />
-                @result.Title
-                <MatIconButton Class="float-right" Icon="@MatIconNames.Playlist_add" OnClick="async () => await AddSong(result.Id)"></MatIconButton>
-            </MatListItem>
-            if (i < _results.Count - 1)
-            {
-                <MatDivider></MatDivider>
-            }
-        }
-    </MatList>
+<div class="mat-layout-grid pt-0">
+    <div class="mat-layout-grid-inner">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-9">
+            <MatTextField @bind-Value="@_queryText" Label="Search text" FullWidth="true"></MatTextField>
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-3" style="align-self: center; justify-self: center;">
+            <MatButton Icon="@MatIconNames.Search" OnClick="@Search" Raised="true" Disabled="@_searching">Search</MatButton>
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+            <MatList>
+                @foreach (var (result, i) in _results.Select((result, i) => (result, i)))
+                {
+                    <MatListItem Class="my-1 px-0">
+                        <img src="@result.ThumbnailUrl" width="120" height="90" />
+                        <MatListItemPrimaryText>@result.Title - <em>@result.Duration.ToString("g")</em></MatListItemPrimaryText>
+                        <MatListItemSecondaryText>@result.ViewCount.ToString("#,#", new NumberFormatInfo { NumberGroupSeparator = " " })</MatListItemSecondaryText>
+                        <MatIconButton Class="float-right" Icon="@MatIconNames.Playlist_add" OnClick="async () => await AddSong(result)"></MatIconButton>
+                    </MatListItem>
+                    if (i < _results.Count - 1)
+                    {
+                        <MatDivider></MatDivider>
+                    }
+                }
+            </MatList>
+        </div>
+    </div>
 </div>
 
 @code
@@ -35,6 +41,9 @@
 
     [Parameter]
     public string RoomName { get; set; }
+
+    [Parameter]
+    public string UserName { get; set; }
 
     [Parameter]
     public HubConnection HubConnection { get; set; }
@@ -61,21 +70,18 @@
         }
     }
 
-    private async Task AddSong(string id)
+    private async Task AddSong(SearchResultInfo result)
     {
-        var result = _results.FirstOrDefault(x => x.Id == id);
-        if (result == null)
-        {
-            return;
-        }
-
         var song = new SongInfo
         {
             Id = result.Id,
             Name = result.Title,
-            Type = Type
+            Duration = result.Duration,
+            Type = Type,
+            AddedBy = UserName
 
         };
+
         await HubConnection.SendAsync("AddSong", RoomName, song);
     }
 }
