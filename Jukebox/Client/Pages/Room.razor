@@ -3,38 +3,51 @@
 @using Jukebox.Shared.Player
 @using Microsoft.AspNetCore.SignalR.Client
 @using Jukebox.Player
+@using Jukebox.Player.Manager
+@using Microsoft.Extensions.DependencyInjection
 
 @implements IAsyncDisposable
 
 @inject NavigationManager NavigationManager
-
-@inject IJSRuntime JsRuntime
+@inject IPlayerManager PlayerManager
 
 <MatH2 Class="text-center pb-5">Room: @RoomName</MatH2>
 
 <div class="mat-layout-grid">
     <div class="mat-layout-grid-inner">
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
-            <MatAccordion>
-                <MatExpansionPanel Class="mat-elevation-z6">
-                    <MatExpansionPanelSummary>
-                        <MatExpansionPanelHeader>Media</MatExpansionPanelHeader>
-                    </MatExpansionPanelSummary>
-                    <MatExpansionPanelDetails>
-                        <Player Playlist="@RoomInfo?.Playlist"></Player>
-                    </MatExpansionPanelDetails>
-                </MatExpansionPanel>
-            </MatAccordion>
-            <MatAccordion>
-                <MatExpansionPanel @bind-Expanded="@_playlistOpened" Class="mat-elevation-z6">
-                    <MatExpansionPanelSummary>
-                        <MatExpansionPanelHeader>Playlist</MatExpansionPanelHeader>
-                    </MatExpansionPanelSummary>
-                    <MatExpansionPanelDetails>
-                        <Playlist PlaylistInfo="@RoomInfo?.Playlist" RoomName="@RoomName" HubConnection="@_hubConnection"></Playlist>
-                    </MatExpansionPanelDetails>
-                </MatExpansionPanel>
-            </MatAccordion>
+            @*<div class="mat-layout-grid-inner">
+                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12 mat-elevation-z6">
+                    <Controls></Controls>
+                </div>
+                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12 mat-elevation-z6">*@
+            <div class="mat-elevation-z3">
+                <Controls Playlist="@RoomInfo?.Playlist" RoomName="@RoomName" HubConnection="@_hubConnection"></Controls>
+            </div>
+                    <MatAccordion Class="mat-elevation-z6">
+                        <MatExpansionPanel>
+                            <MatExpansionPanelSummary>
+                                <MatExpansionPanelHeader>Player</MatExpansionPanelHeader>
+                            </MatExpansionPanelSummary>
+                            <MatExpansionPanelDetails>
+                                <Player Playlist="@RoomInfo?.Playlist"></Player>
+                            </MatExpansionPanelDetails>
+                        </MatExpansionPanel>
+                    </MatAccordion>
+                @*</div>
+                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12 mat-elevation-z6">*@
+                    <MatAccordion Class="mat-elevation-z6">
+                        <MatExpansionPanel @bind-Expanded="@_playlistOpened">
+                            <MatExpansionPanelSummary>
+                                <MatExpansionPanelHeader>Playlist</MatExpansionPanelHeader>
+                            </MatExpansionPanelSummary>
+                            <MatExpansionPanelDetails>
+                                <Playlist PlaylistInfo="@RoomInfo?.Playlist" RoomName="@RoomName" HubConnection="@_hubConnection"></Playlist>
+                            </MatExpansionPanelDetails>
+                        </MatExpansionPanel>
+                    </MatAccordion>
+                @*</div>
+            </div>*@
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
             <MatTabGroup Class="mat-elevation-z6">
@@ -77,6 +90,7 @@
 
         _hubConnection = new HubConnectionBuilder()
             .WithUrl(NavigationManager.ToAbsoluteUri("/jukeboxHub"))
+            .AddJsonProtocol(options => options.PayloadSerializerOptions.Converters.Add(new TimeSpanConverter()))
             .Build();
 
         _hubConnection.On<string, RoomInfo>("RoomEntered", RoomEntered);
@@ -84,6 +98,8 @@
         _hubConnection.On<string>("UserRemoved", UserRemoved);
         _hubConnection.On<SongInfo>("SongAdded", SongAdded);
         _hubConnection.On<SongInfo>("SongRemoved", SongRemoved);
+        _hubConnection.On<SongInfo>("SongChanged", SongChanged);
+        _hubConnection.On<PlayerState>("PlayerStateChanged", PlayerStateChanged);
 
         await _hubConnection.StartAsync();
 
@@ -116,16 +132,62 @@
         Console.WriteLine("User leaved : {0}", connectionId);
     }
 
-    private void SongAdded(SongInfo song)
+    private async Task SongAdded(SongInfo song)
     {
+        Console.WriteLine("Song added: {0}", song.Id);
         RoomInfo.Playlist.AllSongs.Add(song);
         StateHasChanged();
+
+        if (RoomInfo.Playlist.CurrentSong == null)
+        {
+            Console.WriteLine("First song");
+            await SongChanged(song);
+        }
     }
 
     private void SongRemoved(SongInfo song)
     {
         RoomInfo.Playlist.AllSongs.RemoveAt(RoomInfo.Playlist.AllSongs.FindIndex(x => x.Id == song.Id && x.Type == song.Type));
         StateHasChanged();
+    }
+
+    private async Task SongChanged(SongInfo song)
+    {
+        Console.WriteLine("Song changed: {0}", song.Id);
+        if (RoomInfo.Playlist.CurrentSong != null)
+        {
+            RoomInfo.Playlist.CurrentSong.IsPlaying = false;
+        }
+        RoomInfo.Playlist.CurrentSong = RoomInfo.Playlist.AllSongs.Find(s => s.Id == song.Id && s.Type == song.Type);
+        StateHasChanged();
+
+        var player = PlayerManager.GetPlayer(RoomInfo.Playlist.CurrentSong.Type);
+        while (!(await player.IsReady()))
+        {
+            await Task.Delay(100);
+        }
+        await player.QueueMediaById(song.Id);
+
+    }
+
+    private async Task PlayerStateChanged(PlayerState state)
+    {
+        Console.WriteLine("Player state: {0}", state);
+        var play = state == PlayerState.Playing;
+        if (RoomInfo.Playlist.CurrentSong.IsPlaying != play)
+        {
+            RoomInfo.Playlist.CurrentSong.IsPlaying = play;
+            var player = PlayerManager.GetPlayer(RoomInfo.Playlist.CurrentSong.Type);
+            if (RoomInfo.Playlist.CurrentSong.IsPlaying)
+            {
+                await player.Play();
+            }
+            else
+            {
+                await player.Pause();
+            }
+            StateHasChanged();
+        }
     }
 
     public async ValueTask DisposeAsync()

@@ -84,6 +84,10 @@ namespace Jukebox.Server.Storage
             lock (room)
             {
                 room.Playlist.AllSongs.Add(song);
+                if (room.Playlist.CurrentSong == null)
+                {
+                    room.Playlist.CurrentSong = song;
+                }
             }
 
             return Task.CompletedTask;
@@ -100,14 +104,14 @@ namespace Jukebox.Server.Storage
             var room = _rooms[roomName];
             lock (room)
             {
-                if (room.Playlist.NextSongs.Any(x => x.Id == song.Id && x.Type == song.Type))
+                if (room.Playlist.CurrentSong.Id == song.Id && room.Playlist.CurrentSong.Type == song.Type)
                 {
-                    room.Playlist.AllSongs.RemoveAt(room.Playlist.AllSongs.FindIndex(x => x.Id == song.Id && x.Type == song.Type));
-                    result = true;
+                    result = false;
                 }
                 else
                 {
-                    result = false;
+                    room.Playlist.AllSongs.RemoveAt(room.Playlist.AllSongs.FindIndex(x => x.Id == song.Id && x.Type == song.Type));
+                    result = true;
                 }
             }
 

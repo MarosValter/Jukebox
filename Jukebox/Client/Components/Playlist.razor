@@ -15,7 +15,7 @@
                     <MatListItemPrimaryText>@song.Name</MatListItemPrimaryText>
                     <MatListItemSecondaryText>@song.Duration.ToString("g")</MatListItemSecondaryText>
                 </MatListItemText>
-                <MatIconButton Class="float-right" Icon="@MatIconNames.Delete" Disabled="!PlaylistInfo.NextSongs.Contains(song)" OnClick="async () => await RemoveSong(song)"></MatIconButton>
+                <MatIconButton Class="float-right" Icon="@MatIconNames.Delete" Disabled="PlaylistInfo.CurrentSong == song" OnClick="async () => await RemoveSong(song)"></MatIconButton>
             </MatListItem>
             if (i < PlaylistInfo.AllSongs.Count - 1)
             {
@@ -41,7 +41,7 @@
 
     private async Task RemoveSong(SongInfo song)
     {
-        if (!PlaylistInfo.NextSongs.Contains(song))
+        if (PlaylistInfo.CurrentSong == song)
         {
             return;
         }

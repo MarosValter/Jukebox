@@ -1,6 +1,10 @@
 
 window.ytPlayer = {
+    initialized: false,
     player: null,
+    isReady: function() {
+        return this.initialized;
+    },
     loadApi: function() {
         // This code loads the IFrame Player API code asynchronously.
         var tag = document.createElement('script');
@@ -19,12 +23,25 @@ window.ytPlayer = {
         this.loadApi();
 
         var self = this;
+        var onPlayerReady = function() {
+            self.initialized = true;
+            console.log("YouTube player initialized.");
+        }
+
+        var onPlayerStateChange = function (event) {
+            console.log('YouTube player state changed: ' + event.data);
+            if (event.data === YT.PlayerState.ENDED) {
+                DotNet.invokeMethodAsync('Jukebox.Client', 'Controls.Next');
+            }
+        }
+
         window.onYouTubeIframeAPIReady = function() {
             self.player = new YT.Player(element,
                 {
                     videoId: '',
                     events: {
-
+                        'onReady': onPlayerReady,
+                        'onStateChange': onPlayerStateChange
                     },
                     playerVars: {
                         controls: 0,
@@ -32,6 +49,7 @@ window.ytPlayer = {
                         enablejsapi: 1
                     }
                 });
+            console.log("YouTube player created.");
         }
     }
 }

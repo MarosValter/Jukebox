@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace Jukebox.Player.YouTube.Player
@@ -6,11 +8,14 @@ namespace Jukebox.Player.YouTube.Player
     public class YouTubePlayer : IPlayer
     {
         public const string PlayerName = "ytPlayer";
-        private readonly IJSRuntime _jsRuntime;
 
-        public YouTubePlayer(IJSRuntime jsRuntime)
+        private readonly IJSRuntime _jsRuntime;
+        private readonly ILogger<YouTubePlayer> _logger;
+
+        public YouTubePlayer(IJSRuntime jsRuntime, ILogger<YouTubePlayer> logger)
         {
             _jsRuntime = jsRuntime;
+            _logger = logger;
         }
 
         public PlayerType Type { get; } = PlayerType.YouTube;
@@ -20,13 +25,20 @@ namespace Jukebox.Player.YouTube.Player
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.createPlayer", element);
         }
 
+        public async Task<bool> IsReady()
+        {
+            return await _jsRuntime.InvokeAsync<bool>($"{PlayerName}.isReady");
+        }
+
         public async Task Play()
         {
+            _logger.LogInformation("Play");
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.playVideo");
         }
 
         public async Task Pause()
         {
+            _logger.LogInformation("Pause");
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.pauseVideo");
         }
 
@@ -82,6 +94,7 @@ namespace Jukebox.Player.YouTube.Player
 
         public async Task QueueMediaById(string id)
         {
+            _logger.LogInformation("Queue new video: {0}", id);
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.cueVideoById", id);
         }
 

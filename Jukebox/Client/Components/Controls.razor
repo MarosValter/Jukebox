@@ -1,5 +1,47 @@
-﻿<h3>Controls</h3>
+﻿@using Jukebox.Shared.Player
+@using Microsoft.AspNetCore.SignalR.Client
+
+<div class="p-3 d-flex justify-content-around">
+    <MatIconButton Icon="@MatIconNames.Skip_previous" Disabled="(Playlist?.CurrentSong == null || !Playlist.PreviousSongs.Any())" OnClick="Previous"></MatIconButton>
+    <MatIconButton Icon="@(Playlist?.CurrentSong?.IsPlaying == true ? MatIconNames.Pause : MatIconNames.Play_arrow)" Disabled="Playlist?.CurrentSong == null" OnClick="TogglePlay"></MatIconButton>
+    <MatIconButton Icon="@MatIconNames.Skip_next" Disabled="(Playlist?.CurrentSong == null || !Playlist.NextSongs.Any())" OnClick="Next"></MatIconButton>
+</div>
 
 @code {
+    [Parameter]
+    public PlaylistInfo Playlist { get; set; }
+
+    [Parameter]
+    public string RoomName { get; set; }
+
+    [Parameter]
+    public HubConnection HubConnection { get; set; }
+
+    private static string _roomName;
+    private static HubConnection _hubConnection;
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        _roomName = RoomName;
+        _hubConnection = HubConnection;
+    }
+
+    [JSInvokable("Controls.Previous")]
+    public static async Task Previous()
+    {
+        await _hubConnection.SendAsync("PreviousSong", _roomName);
+    }
+
+    [JSInvokable("Controls.Next")]
+    public static async Task Next()
+    {
+        await _hubConnection.SendAsync("NextSong", _roomName);
+    }
+
+    private async Task TogglePlay()
+    {
+        await HubConnection.SendAsync("ToggleSong", RoomName, !(Playlist?.CurrentSong?.IsPlaying ?? false));
+    }
 
 }

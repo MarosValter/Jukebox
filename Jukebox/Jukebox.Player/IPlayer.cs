@@ -7,6 +7,7 @@ namespace Jukebox.Player
         PlayerType Type { get; }
 
         Task Initialize(string element);
+        Task<bool> IsReady();
 
         Task Play();
         Task Pause();

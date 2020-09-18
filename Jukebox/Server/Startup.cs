@@ -7,7 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
 using Jukebox.Server.Hubs;
+using Jukebox.Server.PlaylistManager;
 using Jukebox.Server.Storage;
+using Jukebox.Shared.Player;
 
 namespace Jukebox.Server
 {
@@ -25,9 +27,10 @@ namespace Jukebox.Server
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<IRoomStorage, InMemoryRoomStorage>();
+            services.AddSingleton<IPlaylistManager, PlaylistManager.PlaylistManager>();
 
             services.AddControllersWithViews();
-            services.AddSignalR();
+            services.AddSignalR().AddJsonProtocol(options => options.PayloadSerializerOptions.Converters.Add(new TimeSpanConverter()));
             services.AddResponseCompression(options =>
             {
                 options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] {"application/octet-stream"});

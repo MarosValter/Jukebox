@@ -4,7 +4,6 @@
 
 @inject IPlayerManager Manager
 
-Type: @Playlist?.CurrentSong?.Type
 @if (Playlist?.CurrentSong?.Type == PlayerType.YouTube)
 {
     <YouTubePlayer></YouTubePlayer>
@@ -14,6 +13,6 @@ Type: @Playlist?.CurrentSong?.Type
     [Parameter]
     public PlaylistInfo Playlist { get; set; }
 
-    private IPlayer CurrentPlayer => Playlist?.CurrentSong != null ? Manager.GetPlayer(Playlist.CurrentSong.Type) : null;
+    //private IPlayer CurrentPlayer => Playlist?.CurrentSong != null ? Manager.GetPlayer(Playlist.CurrentSong.Type) : null;
 
 }

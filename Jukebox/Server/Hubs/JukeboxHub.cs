@@ -1,4 +1,6 @@
 ﻿using System.Threading.Tasks;
+using Jukebox.Player;
+using Jukebox.Server.PlaylistManager;
 using Jukebox.Server.Storage;
 using Jukebox.Shared.Client;
 using Jukebox.Shared.Player;
@@ -9,10 +11,12 @@ namespace Jukebox.Server.Hubs
     public class JukeboxHub : Hub<IJukeboxClient>
     {
         private readonly IRoomStorage _roomStorage;
+        private readonly IPlaylistManager _playlistManager;
 
-        public JukeboxHub(IRoomStorage roomStorage)
+        public JukeboxHub(IRoomStorage roomStorage, IPlaylistManager playlistManager)
         {
             _roomStorage = roomStorage;
+            _playlistManager = playlistManager;
         }
 
         public async Task EnterRoom(string roomName, string userName)
@@ -52,6 +56,35 @@ namespace Jukebox.Server.Hubs
             {
                 await Clients.Group(roomName).SongRemoved(song);
             }
+        }
+
+        public async Task NextSong(string roomName)
+        {
+            var room = await _roomStorage.GetOrCreateRoomAsync(roomName);
+            var result = await _playlistManager.NextSong(room.Playlist);
+            if (result != null)
+            {
+                await Clients.Group(roomName).SongChanged(result);
+                await Clients.Groups(roomName).PlayerStateChanged(PlayerState.Playing);
+            }
+        }
+
+        public async Task PreviousSong(string roomName)
+        {
+            var room = await _roomStorage.GetOrCreateRoomAsync(roomName);
+            var result = await _playlistManager.PreviousSong(room.Playlist);
+            if (result != null)
+            {
+                await Clients.Group(roomName).SongChanged(result);
+                await Clients.Groups(roomName).PlayerStateChanged(PlayerState.Playing);
+            }
+        }
+
+        public async Task ToggleSong(string roomName, bool play)
+        {
+            var room = await _roomStorage.GetOrCreateRoomAsync(roomName);
+            var result = await _playlistManager.ToggleSong(room.Playlist, play);
+            await Clients.Group(roomName).PlayerStateChanged(result);
         }
     }
 }
