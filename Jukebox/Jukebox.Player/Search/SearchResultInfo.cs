@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Jukebox.Player.Base;
+using System;
 
 namespace Jukebox.Player.Search
 {

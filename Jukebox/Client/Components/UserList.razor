@@ -1,27 +1,23 @@
 ﻿@using Jukebox.Shared.Player
 
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+@inject IState<Jukebox.Shared.Store.States.RoomState> State
+
 <MatList>
-    @if (RoomInfo != null)
+    @if (State.Value != null)
     {
-        foreach (var (user, i) in RoomInfo.Users.Select((user, index) => (user, index)))
+        foreach (var (user, i) in State.Value.Users.Select((user, index) => (user, index)))
         {
-            <MatListItem Disabled="@(user.ConnectionId == User?.ConnectionId)">
+            <MatListItem Disabled="@(user.ConnectionId == State.Value.CurrentUser?.ConnectionId)">
                 <MatListItemText>
                     <MatListItemPrimaryText>@user.Name</MatListItemPrimaryText>
                 </MatListItemText>
             </MatListItem>
-            if (i < RoomInfo.Users.Count - 1)
+            if (i < State.Value.Users.Count - 1)
             {
                 <MatDivider></MatDivider>
             }
         }
     }
 </MatList>
-
-@code {
-    [Parameter]
-    public RoomInfo RoomInfo { get; set; }
-
-    [Parameter]
-    public UserInfo User { get; set; }
-}

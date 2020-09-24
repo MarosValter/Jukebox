@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Web;
+using Jukebox.Player.Base;
 using Jukebox.Player.Search;
 
 namespace Jukebox.Player.YouTube.Search
@@ -12,6 +13,7 @@ namespace Jukebox.Player.YouTube.Search
     public class YouTubeSearchEngine : ISearchEngine
     {
         public const string ClientName = "YouTubeHttpClient";
+
         private readonly HttpClient _httpClient;
         private const string APIKey = "AIzaSyAm-hFT1fhw92UEkZhUr5D5EiumjLRUE5I";
 

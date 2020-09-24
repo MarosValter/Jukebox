@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Fluxor.Blazor.Web" Version="3.7.0" />
     <PackageReference Include="MatBlazor" Version="2.7.0-develop-017" />
   </ItemGroup>
 

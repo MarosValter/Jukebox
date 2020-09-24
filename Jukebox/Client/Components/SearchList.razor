@@ -1,9 +1,12 @@
 ﻿@using Jukebox.Player.Search
-@using Jukebox.Player
+@using Jukebox.Player.Base
 @using Jukebox.Shared.Player
-@using Microsoft.AspNetCore.SignalR.Client
 @using System.Globalization
 
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+@inject IHubStore HubStore
+@inject IState<Jukebox.Shared.Store.States.RoomState> State
 @inject ISearchEngineProvider SearchEngineProvider
 
 <div class="mat-layout-grid pt-0">
@@ -20,7 +23,7 @@
                 {
                     <MatListItem Class="my-1 px-0">
                         <img src="@result.ThumbnailUrl" width="120" height="90" />
-                        <MatListItemPrimaryText>@result.Title - <em>@result.Duration.ToString("g")</em></MatListItemPrimaryText>
+                        <MatListItemPrimaryText>@result.Title - <em>@result.Duration.ToDurationString()</em></MatListItemPrimaryText>
                         <MatListItemSecondaryText>@result.ViewCount.ToString("#,#", new NumberFormatInfo { NumberGroupSeparator = " " })</MatListItemSecondaryText>
                         <MatIconButton Class="float-right" Icon="@MatIconNames.Playlist_add" OnClick="async () => await AddSong(result)"></MatIconButton>
                     </MatListItem>
@@ -38,15 +41,6 @@
 {
     [Parameter]
     public PlayerType Type { get; set; } = PlayerType.None;
-
-    [Parameter]
-    public string RoomName { get; set; }
-
-    [Parameter]
-    public string UserName { get; set; }
-
-    [Parameter]
-    public HubConnection HubConnection { get; set; }
 
     private ISearchEngine _searchEngine;
 
@@ -78,10 +72,10 @@
             Name = result.Title,
             Duration = result.Duration,
             Type = Type,
-            AddedBy = UserName
+            AddedBy = State.Value?.CurrentUser.Name
 
         };
 
-        await HubConnection.SendAsync("AddSong", RoomName, song);
+        await HubStore.AddSong(song);
     }
 }

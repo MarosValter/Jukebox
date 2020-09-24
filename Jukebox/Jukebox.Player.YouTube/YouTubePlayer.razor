@@ -1,6 +1,9 @@
 ﻿@using Microsoft.Extensions.Logging
+@using Jukebox.Player.Base
+@using Jukebox.Player.Manager
 
 @inject IJSRuntime JsRuntime
+@inject IPlayerManager PlayerManager
 @inject ILoggerFactory LoggerFactory
 
 <div id="yt-player"></div>
@@ -10,7 +13,7 @@
     {
         if (firstRender)
         {
-            await new Player.YouTubePlayer(JsRuntime, LoggerFactory.CreateLogger<Player.YouTubePlayer>()).Initialize("yt-player");
+            await PlayerManager.GetPlayer(PlayerType.YouTube).Initialize("yt-player");
         }
     }
 }

@@ -72,50 +72,5 @@ namespace Jukebox.Server.Storage
 
             return Task.FromResult(result);
         }
-
-        public Task AddSongAsync(string roomName, SongInfo song)
-        {
-            if (!_rooms.ContainsKey(roomName))
-            {
-                throw new InvalidOperationException("Room not found.");
-            }
-
-            var room = _rooms[roomName];
-            lock (room)
-            {
-                room.Playlist.AllSongs.Add(song);
-                if (room.Playlist.CurrentSong == null)
-                {
-                    room.Playlist.CurrentSong = song;
-                }
-            }
-
-            return Task.CompletedTask;
-        }
-
-        public Task<bool> RemoveSongAsync(string roomName, SongInfo song)
-        {
-            if (!_rooms.ContainsKey(roomName))
-            {
-                throw new InvalidOperationException("Room not found.");
-            }
-
-            bool result;
-            var room = _rooms[roomName];
-            lock (room)
-            {
-                if (room.Playlist.CurrentSong.Id == song.Id && room.Playlist.CurrentSong.Type == song.Type)
-                {
-                    result = false;
-                }
-                else
-                {
-                    room.Playlist.AllSongs.RemoveAt(room.Playlist.AllSongs.FindIndex(x => x.Id == song.Id && x.Type == song.Type));
-                    result = true;
-                }
-            }
-
-            return Task.FromResult(result);
-        }
     }
 }

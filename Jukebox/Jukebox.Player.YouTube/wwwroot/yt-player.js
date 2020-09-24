@@ -1,6 +1,7 @@
 
 window.ytPlayer = {
     initialized: false,
+    videoQueued: false,
     player: null,
     isReady: function() {
         return this.initialized;
@@ -12,6 +13,19 @@ window.ytPlayer = {
         tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    },
+
+    playVideo: function () {
+        //if (this.initialized && this.player.getPlayerState() === YT.PlayerState.PLAYING) {
+        //    return;
+        //}
+
+        if (this.initialized && (this.player.getPlayerState() === YT.PlayerState.CUED || this.player.getPlayerState() === YT.PlayerState.PAUSED)) {
+            this.player.playVideo();
+        }
+        else {
+            this.videoQueued = true;
+        }
     },
 
     createPlayer: function (element) {
@@ -30,6 +44,12 @@ window.ytPlayer = {
 
         var onPlayerStateChange = function (event) {
             console.log('YouTube player state changed: ' + event.data);
+
+            if (self.videoQueued && event.data === YT.PlayerState.CUED) {
+                self.videoQueued = false;
+                self.player.playVideo();
+            }
+
             if (event.data === YT.PlayerState.ENDED) {
                 DotNet.invokeMethodAsync('Jukebox.Client', 'Controls.Next');
             }
@@ -44,6 +64,7 @@ window.ytPlayer = {
                         'onStateChange': onPlayerStateChange
                     },
                     playerVars: {
+                        autoplay: 0,
                         controls: 0,
                         disablekb: 1,
                         enablejsapi: 1

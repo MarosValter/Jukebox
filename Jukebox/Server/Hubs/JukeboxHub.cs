@@ -1,5 +1,6 @@
-﻿using System.Threading.Tasks;
-using Jukebox.Player;
+﻿using System;
+using System.Threading.Tasks;
+using Jukebox.Player.Base;
 using Jukebox.Server.PlaylistManager;
 using Jukebox.Server.Storage;
 using Jukebox.Shared.Client;
@@ -19,7 +20,13 @@ namespace Jukebox.Server.Hubs
             _playlistManager = playlistManager;
         }
 
-        public async Task EnterRoom(string roomName, string userName)
+        public override Task OnDisconnectedAsync(Exception exception)
+        {
+            
+            return base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task<RoomEnteredResult> EnterRoom(string roomName, string userName)
         {
             var room = await _roomStorage.GetOrCreateRoomAsync(roomName);
             var user = new UserInfo {Name = userName, ConnectionId = Context.ConnectionId};
@@ -28,9 +35,17 @@ namespace Jukebox.Server.Hubs
             if (result)
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, roomName);
-                await Clients.Caller.RoomEntered(Context.ConnectionId, room);
                 await Clients.OthersInGroup(roomName).UserAdded(user);
+
+                room.CurrentUser = user;
+                return new RoomEnteredResult
+                {
+                    ConnectionId = Context.ConnectionId,
+                    Room = room
+                };
             }
+
+            return null;
         }
 
         public async Task LeaveRoom(string roomName)
@@ -46,13 +61,20 @@ namespace Jukebox.Server.Hubs
 
         public async Task AddSong(string roomName, SongInfo song)
         {
-            await _roomStorage.AddSongAsync(roomName, song);
+            var room = await _roomStorage.GetOrCreateRoomAsync(roomName);
+            var firstSong = await _playlistManager.AddSong(room.Playlist, song);
             await Clients.Group(roomName).SongAdded(song);
+            if (firstSong)
+            {
+                await _playlistManager.ToggleSong(room.Playlist);
+                await Clients.Group(roomName).SongChanged(song);
+            }
         }
 
         public async Task RemoveSong(string roomName, SongInfo song)
         {
-            if (await _roomStorage.RemoveSongAsync(roomName, song))
+            var room = await _roomStorage.GetOrCreateRoomAsync(roomName);
+            if (await _playlistManager.RemoveSong(room.Playlist, song))
             {
                 await Clients.Group(roomName).SongRemoved(song);
             }
@@ -65,7 +87,6 @@ namespace Jukebox.Server.Hubs
             if (result != null)
             {
                 await Clients.Group(roomName).SongChanged(result);
-                await Clients.Groups(roomName).PlayerStateChanged(PlayerState.Playing);
             }
         }
 
@@ -76,15 +97,21 @@ namespace Jukebox.Server.Hubs
             if (result != null)
             {
                 await Clients.Group(roomName).SongChanged(result);
-                await Clients.Groups(roomName).PlayerStateChanged(PlayerState.Playing);
             }
         }
 
-        public async Task ToggleSong(string roomName, bool play)
+        public async Task ToggleSong(string roomName)
         {
             var room = await _roomStorage.GetOrCreateRoomAsync(roomName);
-            var result = await _playlistManager.ToggleSong(room.Playlist, play);
-            await Clients.Group(roomName).PlayerStateChanged(result);
+            var result = await _playlistManager.ToggleSong(room.Playlist);
+            await Clients.Group(roomName).PlayerStateChanged(result, room.Playlist.CurrentSong.Type);
+        }
+
+        public async Task ChangeSong(string roomName, SongInfo song)
+        {
+            var room = await _roomStorage.GetOrCreateRoomAsync(roomName);
+            await _playlistManager.ChangeSong(room.Playlist, song);
+            await Clients.Group(roomName).SongChanged(song);
         }
     }
 }

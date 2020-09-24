@@ -1,4 +1,6 @@
-﻿namespace Jukebox.Player.Search
+﻿using Jukebox.Player.Base;
+
+namespace Jukebox.Player.Search
 {
     public interface ISearchEngineProvider
     {

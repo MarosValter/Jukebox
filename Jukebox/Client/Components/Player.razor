@@ -1,18 +1,10 @@
-﻿@using Jukebox.Shared.Player
-@using Jukebox.Player
-@using Jukebox.Player.Manager
+﻿@using Jukebox.Player.Base
 
-@inject IPlayerManager Manager
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
 
-@if (Playlist?.CurrentSong?.Type == PlayerType.YouTube)
+@inject IState<Jukebox.Shared.Store.States.PlaylistState> State
+
+@if (State.Value?.CurrentSong?.Type == PlayerType.YouTube)
 {
     <YouTubePlayer></YouTubePlayer>
-}
-
-@code {
-    [Parameter]
-    public PlaylistInfo Playlist { get; set; }
-
-    //private IPlayer CurrentPlayer => Playlist?.CurrentSong != null ? Manager.GetPlayer(Playlist.CurrentSong.Type) : null;
-
 }

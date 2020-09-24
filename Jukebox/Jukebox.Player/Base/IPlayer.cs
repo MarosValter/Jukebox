@@ -1,10 +1,14 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
-namespace Jukebox.Player
+namespace Jukebox.Player.Base
 {
     public interface IPlayer
     {
         PlayerType Type { get; }
+        PlayerState State { get; set; }
+
+        event EventHandler<PlayerState> StateChanged;
 
         Task Initialize(string element);
         Task<bool> IsReady();
@@ -22,8 +26,8 @@ namespace Jukebox.Player
         Task UnMute();
         Task<bool> IsMuted();
 
-        Task<double> GetElapsedTime();
-        Task<double> GetDuration();
+        Task<TimeSpan> GetElapsedTime();
+        Task<TimeSpan> GetDuration();
 
         Task QueueMediaById(string id);
         Task QueueMediaByUrl(string url);

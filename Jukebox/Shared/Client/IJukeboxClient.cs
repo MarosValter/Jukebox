@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Jukebox.Player;
+using Jukebox.Player.Base;
 using Jukebox.Shared.Player;
 
 namespace Jukebox.Shared.Client
 {
     public interface IJukeboxClient
     {
-        Task RoomEntered(string connectionId, RoomInfo room);
-
         Task UserAdded(UserInfo user);
         Task UserRemoved(string connectionId);
 
         Task SongAdded(SongInfo song);
         Task SongRemoved(SongInfo song);
         Task SongChanged(SongInfo song);
-        Task ProgressChanged(TimeSpan duration);
-        Task PlayerStateChanged(PlayerState state);
+        Task SongPositionChanged(TimeSpan duration);
+        Task PlayerStateChanged(PlayerState state, PlayerType type);
     }
 }

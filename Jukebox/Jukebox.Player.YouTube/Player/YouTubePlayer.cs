@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Jukebox.Player.Base;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace Jukebox.Player.YouTube.Player
 {
-    public class YouTubePlayer : IPlayer
+    public class YouTubePlayer : PlayerBase
     {
         public const string PlayerName = "ytPlayer";
 
@@ -18,87 +19,87 @@ namespace Jukebox.Player.YouTube.Player
             _logger = logger;
         }
 
-        public PlayerType Type { get; } = PlayerType.YouTube;
+        public override PlayerType Type { get; } = PlayerType.YouTube;
 
-        public async Task Initialize(string element)
+        public override async Task Initialize(string element)
         {
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.createPlayer", element);
         }
 
-        public async Task<bool> IsReady()
+        public override async Task<bool> IsReady()
         {
             return await _jsRuntime.InvokeAsync<bool>($"{PlayerName}.isReady");
         }
 
-        public async Task Play()
+        public override async Task PlayInternal()
         {
             _logger.LogInformation("Play");
-            await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.playVideo");
+            await _jsRuntime.InvokeVoidAsync($"{PlayerName}.playVideo");
         }
 
-        public async Task Pause()
+        public override async Task PauseInternal()
         {
             _logger.LogInformation("Pause");
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.pauseVideo");
         }
 
-        public async Task Next()
+        public override async Task Next()
         {
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.nextVideo");
         }
 
-        public async Task Previous()
+        public override async Task Previous()
         {
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.previousVideo");
         }
 
-        public async Task SeekTo(double seconds)
+        public override async Task SeekTo(double seconds)
         {
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.seekTo", seconds);
         }
 
-        public async Task SetVolume(int value)
+        public override async Task SetVolume(int value)
         {
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.setVolume", value);
         }
 
-        public async Task<int> GetVolume()
+        public override async Task<int> GetVolume()
         {
             return await _jsRuntime.InvokeAsync<int>($"{PlayerName}.player.getVolume");
         }
 
-        public async Task Mute()
+        public override async Task Mute()
         {
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.mute");
         }
 
-        public async Task UnMute()
+        public override async Task UnMute()
         {
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.unMute");
         }
 
-        public async Task<bool> IsMuted()
+        public override async Task<bool> IsMuted()
         {
             return await _jsRuntime.InvokeAsync<bool>($"{PlayerName}.player.isMuted");
         }
 
-        public async Task<double> GetElapsedTime()
+        public override async Task<TimeSpan> GetElapsedTime()
         {
-            return await _jsRuntime.InvokeAsync<double>($"{PlayerName}.player.getCurrentTime");
+            return TimeSpan.FromSeconds(await _jsRuntime.InvokeAsync<double>($"{PlayerName}.player.getCurrentTime"));
         }
 
-        public async Task<double> GetDuration()
+        public override async Task<TimeSpan> GetDuration()
         {
-            return await _jsRuntime.InvokeAsync<double>($"{PlayerName}.player.getDuration");
+            return TimeSpan.FromSeconds(await _jsRuntime.InvokeAsync<double>($"{PlayerName}.player.getDuration"));
         }
 
-        public async Task QueueMediaById(string id)
+        public override async Task QueueMediaById(string id)
         {
             _logger.LogInformation("Queue new video: {0}", id);
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.cueVideoById", id);
         }
 
-        public async Task QueueMediaByUrl(string url)
+        public override async Task QueueMediaByUrl(string url)
         {
             await _jsRuntime.InvokeVoidAsync($"{PlayerName}.player.cueVideoByUrl", url);
         }

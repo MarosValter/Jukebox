@@ -1,28 +1,29 @@
 ﻿@using Jukebox.Shared.Player
-@using Microsoft.AspNetCore.SignalR.Client
 
-@if (PlaylistInfo != null)
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+@inject IHubStore HubStore
+@inject IState<Jukebox.Shared.Store.States.PlaylistState> State
+
+@if (State.Value != null)
 {
     <MatList>
-        @foreach (var (song, i) in PlaylistInfo.AllSongs.Select((song, index) => (song, index)))
+        @foreach (var (song, i) in State.Value.AllSongs.Select((song, index) => (song, index)))
         {
-            <MatListItem>
-                @if (PlaylistInfo.CurrentSong == song)
-                {
-                    <MatIcon Icon="@MatIconNames.Play_circle_filled"></MatIcon>
-                }
+            <MatListItem Style="@(State.Value.CurrentSong == song ? "background-color: lightgrey;" : "")">
+                <MatIconButton Icon="@MatIconNames.Play_circle_filled" OnClick="async () => await ChangeSong(song)"></MatIconButton>
                 <MatListItemText>
                     <MatListItemPrimaryText>@song.Name</MatListItemPrimaryText>
-                    <MatListItemSecondaryText>@song.Duration.ToString("g")</MatListItemSecondaryText>
+                    <MatListItemSecondaryText>@song.Duration.ToDurationString()</MatListItemSecondaryText>
                 </MatListItemText>
-                <MatIconButton Class="float-right" Icon="@MatIconNames.Delete" Disabled="PlaylistInfo.CurrentSong == song" OnClick="async () => await RemoveSong(song)"></MatIconButton>
+                <MatIconButton Class="float-right" Icon="@MatIconNames.Delete" Disabled="State.Value.CurrentSong == song" OnClick="async () => await RemoveSong(song)"></MatIconButton>
             </MatListItem>
-            if (i < PlaylistInfo.AllSongs.Count - 1)
+            if (i < State.Value.AllSongs.Count - 1)
             {
                 <MatDivider></MatDivider>
             }
         }
-        @if (!PlaylistInfo.AllSongs.Any())
+        @if (!State.Value.AllSongs.Any())
         {
             <MatListItem><em>empty</em></MatListItem>
         }
@@ -30,22 +31,18 @@
 }
 
 @code {
-    [Parameter]
-    public string RoomName { get; set; }
-
-    [Parameter]
-    public PlaylistInfo PlaylistInfo { get; set; }
-
-    [Parameter]
-    public HubConnection HubConnection { get; set; }
+    private async Task ChangeSong(SongInfo song)
+    {
+        await HubStore.ChangeSong(song);
+    }
 
     private async Task RemoveSong(SongInfo song)
     {
-        if (PlaylistInfo.CurrentSong == song)
+        if (State.Value?.CurrentSong == song)
         {
             return;
         }
 
-        await HubConnection.SendAsync("RemoveSong", RoomName, song);
+        await HubStore.RemoveSong(song);
     }
 }

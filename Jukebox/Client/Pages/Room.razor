@@ -1,15 +1,12 @@
 ﻿@page "/{roomName}/{userName}"
 
-@using Jukebox.Shared.Player
-@using Microsoft.AspNetCore.SignalR.Client
-@using Jukebox.Player
-@using Jukebox.Player.Manager
-@using Microsoft.Extensions.DependencyInjection
+@using Jukebox.Player.Base
 
 @implements IAsyncDisposable
 
+@inject IHubStore HubStore
+@inject IDispatcher Dispatcher
 @inject NavigationManager NavigationManager
-@inject IPlayerManager PlayerManager
 
 <MatH2 Class="text-center pb-5">Room: @RoomName</MatH2>
 
@@ -22,43 +19,43 @@
                 </div>
                 <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12 mat-elevation-z6">*@
             <div class="mat-elevation-z3">
-                <Controls Playlist="@RoomInfo?.Playlist" RoomName="@RoomName" HubConnection="@_hubConnection"></Controls>
+                <Controls></Controls>
             </div>
-                    <MatAccordion Class="mat-elevation-z6">
-                        <MatExpansionPanel>
-                            <MatExpansionPanelSummary>
-                                <MatExpansionPanelHeader>Player</MatExpansionPanelHeader>
-                            </MatExpansionPanelSummary>
-                            <MatExpansionPanelDetails>
-                                <Player Playlist="@RoomInfo?.Playlist"></Player>
-                            </MatExpansionPanelDetails>
-                        </MatExpansionPanel>
-                    </MatAccordion>
-                @*</div>
+            <MatAccordion Class="mat-elevation-z6">
+                <MatExpansionPanel>
+                    <MatExpansionPanelSummary>
+                        <MatExpansionPanelHeader>Player</MatExpansionPanelHeader>
+                    </MatExpansionPanelSummary>
+                    <MatExpansionPanelDetails>
+                        <Player></Player>
+                    </MatExpansionPanelDetails>
+                </MatExpansionPanel>
+            </MatAccordion>
+            @*</div>
                 <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12 mat-elevation-z6">*@
-                    <MatAccordion Class="mat-elevation-z6">
-                        <MatExpansionPanel @bind-Expanded="@_playlistOpened">
-                            <MatExpansionPanelSummary>
-                                <MatExpansionPanelHeader>Playlist</MatExpansionPanelHeader>
-                            </MatExpansionPanelSummary>
-                            <MatExpansionPanelDetails>
-                                <Playlist PlaylistInfo="@RoomInfo?.Playlist" RoomName="@RoomName" HubConnection="@_hubConnection"></Playlist>
-                            </MatExpansionPanelDetails>
-                        </MatExpansionPanel>
-                    </MatAccordion>
-                @*</div>
-            </div>*@
+            <MatAccordion Class="mat-elevation-z6">
+                <MatExpansionPanel @bind-Expanded="@_playlistOpened">
+                    <MatExpansionPanelSummary>
+                        <MatExpansionPanelHeader>Playlist</MatExpansionPanelHeader>
+                    </MatExpansionPanelSummary>
+                    <MatExpansionPanelDetails>
+                        <Playlist></Playlist>
+                    </MatExpansionPanelDetails>
+                </MatExpansionPanel>
+            </MatAccordion>
+            @*</div>
+                </div>*@
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
             <MatTabGroup Class="mat-elevation-z6">
                 <MatTab Label="Users">
-                    <UserList RoomInfo="@RoomInfo" User="@User"></UserList>
+                    <UserList></UserList>
                 </MatTab>
                 <MatTab Label="Chat">
 
                 </MatTab>
                 <MatTab Label="YouTube">
-                    <SearchList Type="@PlayerType.YouTube" RoomName="@RoomName" UserName="@UserName" HubConnection="@_hubConnection"></SearchList>
+                    <SearchList Type="@PlayerType.YouTube"></SearchList>
                 </MatTab>
                 <MatTab Label="Spotify">
 
@@ -75,126 +72,17 @@
     [Parameter]
     public string UserName { get; set; }
 
-    public UserInfo User { get; set; }
-
-    public RoomInfo RoomInfo { get; set; }
-
-
-    private HubConnection _hubConnection;
-
     private bool _playlistOpened;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-
-        _hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/jukeboxHub"))
-            .AddJsonProtocol(options => options.PayloadSerializerOptions.Converters.Add(new TimeSpanConverter()))
-            .Build();
-
-        _hubConnection.On<string, RoomInfo>("RoomEntered", RoomEntered);
-        _hubConnection.On<UserInfo>("UserAdded", UserAdded);
-        _hubConnection.On<string>("UserRemoved", UserRemoved);
-        _hubConnection.On<SongInfo>("SongAdded", SongAdded);
-        _hubConnection.On<SongInfo>("SongRemoved", SongRemoved);
-        _hubConnection.On<SongInfo>("SongChanged", SongChanged);
-        _hubConnection.On<PlayerState>("PlayerStateChanged", PlayerStateChanged);
-
-        await _hubConnection.StartAsync();
-
-        await _hubConnection.SendAsync("EnterRoom", RoomName, UserName);
-    }
-
-    private void RoomEntered(string connectionId, RoomInfo room)
-    {
-        User = new UserInfo
-        {
-            Name = UserName,
-            ConnectionId = connectionId
-        };
-        RoomInfo = room;
-        StateHasChanged();
-        Console.WriteLine("Room entered with connectionId: {0}", connectionId);
-    }
-
-    private void UserAdded(UserInfo user)
-    {
-        RoomInfo.Users.Add(user);
-        StateHasChanged();
-        Console.WriteLine("New user added : {0} ({1})", user.Name, user.ConnectionId);
-    }
-
-    private void UserRemoved(string connectionId)
-    {
-        RoomInfo.Users.RemoveAt(RoomInfo.Users.FindIndex(x => x.ConnectionId == connectionId));
-        StateHasChanged();
-        Console.WriteLine("User leaved : {0}", connectionId);
-    }
-
-    private async Task SongAdded(SongInfo song)
-    {
-        Console.WriteLine("Song added: {0}", song.Id);
-        RoomInfo.Playlist.AllSongs.Add(song);
-        StateHasChanged();
-
-        if (RoomInfo.Playlist.CurrentSong == null)
-        {
-            Console.WriteLine("First song");
-            await SongChanged(song);
-        }
-    }
-
-    private void SongRemoved(SongInfo song)
-    {
-        RoomInfo.Playlist.AllSongs.RemoveAt(RoomInfo.Playlist.AllSongs.FindIndex(x => x.Id == song.Id && x.Type == song.Type));
-        StateHasChanged();
-    }
-
-    private async Task SongChanged(SongInfo song)
-    {
-        Console.WriteLine("Song changed: {0}", song.Id);
-        if (RoomInfo.Playlist.CurrentSong != null)
-        {
-            RoomInfo.Playlist.CurrentSong.IsPlaying = false;
-        }
-        RoomInfo.Playlist.CurrentSong = RoomInfo.Playlist.AllSongs.Find(s => s.Id == song.Id && s.Type == song.Type);
-        StateHasChanged();
-
-        var player = PlayerManager.GetPlayer(RoomInfo.Playlist.CurrentSong.Type);
-        while (!(await player.IsReady()))
-        {
-            await Task.Delay(100);
-        }
-        await player.QueueMediaById(song.Id);
-
-    }
-
-    private async Task PlayerStateChanged(PlayerState state)
-    {
-        Console.WriteLine("Player state: {0}", state);
-        var play = state == PlayerState.Playing;
-        if (RoomInfo.Playlist.CurrentSong.IsPlaying != play)
-        {
-            RoomInfo.Playlist.CurrentSong.IsPlaying = play;
-            var player = PlayerManager.GetPlayer(RoomInfo.Playlist.CurrentSong.Type);
-            if (RoomInfo.Playlist.CurrentSong.IsPlaying)
-            {
-                await player.Play();
-            }
-            else
-            {
-                await player.Pause();
-            }
-            StateHasChanged();
-        }
+        await HubStore.Initialize(Dispatcher, NavigationManager.ToAbsoluteUri("/jukeboxHub"), RoomName, UserName);
     }
 
     public async ValueTask DisposeAsync()
     {
-        await _hubConnection.SendAsync("LeaveRoom", RoomName);
-        await _hubConnection.StopAsync();
-        await _hubConnection.DisposeAsync();
+        await HubStore.DisposeAsync();
         Console.WriteLine("Room leaved");
     }
 

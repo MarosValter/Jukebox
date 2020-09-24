@@ -1,4 +1,4 @@
-﻿namespace Jukebox.Player
+﻿namespace Jukebox.Player.Base
 {
     public enum PlayerType
     {

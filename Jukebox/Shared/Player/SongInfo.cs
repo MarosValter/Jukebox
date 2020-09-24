@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Jukebox.Player;
+using Jukebox.Player.Base;
 
 namespace Jukebox.Shared.Player
 {
@@ -14,6 +14,18 @@ namespace Jukebox.Shared.Player
         public string AddedBy { get; set; }
         public PlayerType Type { get; set; }
         public bool IsPlaying { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            return obj is SongInfo info &&
+                   Id == info.Id &&
+                   Type == info.Type;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Id, Type);
+        }
     }
 
     public class TimeSpanConverter : JsonConverter<TimeSpan>

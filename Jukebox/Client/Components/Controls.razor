@@ -1,47 +1,42 @@
-﻿@using Jukebox.Shared.Player
-@using Microsoft.AspNetCore.SignalR.Client
+﻿@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+@inject IHubStore HubStore
+@inject IState<PlaylistState> State
 
 <div class="p-3 d-flex justify-content-around">
-    <MatIconButton Icon="@MatIconNames.Skip_previous" Disabled="(Playlist?.CurrentSong == null || !Playlist.PreviousSongs.Any())" OnClick="Previous"></MatIconButton>
-    <MatIconButton Icon="@(Playlist?.CurrentSong?.IsPlaying == true ? MatIconNames.Pause : MatIconNames.Play_arrow)" Disabled="Playlist?.CurrentSong == null" OnClick="TogglePlay"></MatIconButton>
-    <MatIconButton Icon="@MatIconNames.Skip_next" Disabled="(Playlist?.CurrentSong == null || !Playlist.NextSongs.Any())" OnClick="Next"></MatIconButton>
+    <MatIconButton Icon="@MatIconNames.Volume_up" ToggleIcon="@MatIconNames.Volume_off"></MatIconButton>
+    <MatIconButton Icon="@MatIconNames.Skip_previous" Disabled="(State.Value?.CurrentSong == null || !State.Value.PreviousSongs.Any())" OnClick="Previous"></MatIconButton>
+    <MatIconButton Icon="@(State.Value?.IsPlaying == true ? MatIconNames.Pause : MatIconNames.Play_arrow)" Disabled="State.Value?.CurrentSong == null" OnClick="TogglePlay"></MatIconButton>
+    <MatIconButton Icon="@MatIconNames.Skip_next" Disabled="(State.Value?.CurrentSong == null || !State.Value.NextSongs.Any())" OnClick="Next"></MatIconButton>
+    <div>
+        @State.Value.Elapsed.ToDurationString() / @((State.Value.CurrentSong?.Duration ?? default).ToDurationString())
+    </div>
 </div>
+<MySlider Value="@State.Value.Elapsed.TotalMilliseconds" Discrete="true" Pin="true" ValueMin="0d" ValueMax="@((State.Value.CurrentSong?.Duration ?? default).TotalMilliseconds)" TValue="double"></MySlider>
 
 @code {
-    [Parameter]
-    public PlaylistInfo Playlist { get; set; }
-
-    [Parameter]
-    public string RoomName { get; set; }
-
-    [Parameter]
-    public HubConnection HubConnection { get; set; }
-
-    private static string _roomName;
-    private static HubConnection _hubConnection;
+    private static IHubStore _hubStore;
 
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        _roomName = RoomName;
-        _hubConnection = HubConnection;
+        _hubStore = HubStore;
     }
 
     [JSInvokable("Controls.Previous")]
     public static async Task Previous()
     {
-        await _hubConnection.SendAsync("PreviousSong", _roomName);
+        await _hubStore.PreviousSong();
     }
 
     [JSInvokable("Controls.Next")]
     public static async Task Next()
     {
-        await _hubConnection.SendAsync("NextSong", _roomName);
+        await _hubStore.NextSong();
     }
 
     private async Task TogglePlay()
     {
-        await HubConnection.SendAsync("ToggleSong", RoomName, !(Playlist?.CurrentSong?.IsPlaying ?? false));
+        await HubStore.ToggleSong();
     }
-
 }

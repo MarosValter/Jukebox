@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Net.Http;
-using Jukebox.Player;
+using Jukebox.Player.Base;
 using Jukebox.Player.Search;
 using Jukebox.Player.YouTube.Search;
 
