@@ -79,9 +79,15 @@ namespace Jukebox.Client.HubStore
             await HubConnection.SendAsync("ChangeSong", RoomName, song);
         }
 
-        public async Task ChangeSongPosition(int seconds)
+        public async Task ChangeSongElapsed(TimeSpan elapsed)
         {
             //await HubConnection.SendAsync("")
+        }
+
+        public Task ToggleMute(bool muted, PlayerType type)
+        {
+            Dispatcher.Dispatch(new MuteChangedAction(muted, type));
+            return Task.CompletedTask;
         }
 
 

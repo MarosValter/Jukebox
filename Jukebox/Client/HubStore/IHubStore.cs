@@ -1,4 +1,5 @@
 ﻿using Fluxor;
+using Jukebox.Player.Base;
 using Jukebox.Shared.Player;
 using System;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace Jukebox.Client.HubStore
         Task PreviousSong();
         Task ToggleSong();
         Task ChangeSong(SongInfo song);
-        Task ChangeSongPosition(int seconds);
+        Task ChangeSongElapsed(TimeSpan elapsed);
+        Task ToggleMute(bool muted, PlayerType type);
     }
 }

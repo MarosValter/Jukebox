@@ -2,8 +2,8 @@
 {
     public enum PlayerType
     {
+        None,
         YouTube,
-        Spotify,
-        None
+        Spotify
     }
 }

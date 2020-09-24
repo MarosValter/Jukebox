@@ -1,18 +1,36 @@
-﻿@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+﻿@using Jukebox.Player.Base
+
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
 
 @inject IHubStore HubStore
 @inject IState<PlaylistState> State
 
-<div class="p-3 d-flex justify-content-around">
-    <MatIconButton Icon="@MatIconNames.Volume_up" ToggleIcon="@MatIconNames.Volume_off"></MatIconButton>
-    <MatIconButton Icon="@MatIconNames.Skip_previous" Disabled="(State.Value?.CurrentSong == null || !State.Value.PreviousSongs.Any())" OnClick="Previous"></MatIconButton>
-    <MatIconButton Icon="@(State.Value?.IsPlaying == true ? MatIconNames.Pause : MatIconNames.Play_arrow)" Disabled="State.Value?.CurrentSong == null" OnClick="TogglePlay"></MatIconButton>
-    <MatIconButton Icon="@MatIconNames.Skip_next" Disabled="(State.Value?.CurrentSong == null || !State.Value.NextSongs.Any())" OnClick="Next"></MatIconButton>
-    <div>
-        @State.Value.Elapsed.ToDurationString() / @((State.Value.CurrentSong?.Duration ?? default).ToDurationString())
+<div class="mat-layout-grid">
+    <div class="mat-layout-grid-inner">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center">
+            <MatIconButton Icon="@MatIconNames.Volume_up" ToggleIcon="@MatIconNames.Volume_off" ToggledChanged="@ToggleMute"></MatIconButton>
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1">
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center">
+            <MatIconButton Icon="@MatIconNames.Skip_previous" Disabled="(State.Value?.CurrentSong == null || !State.Value.PreviousSongs.Any())" OnClick="Previous"></MatIconButton>
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center">
+            <MatIconButton Icon="@(State.Value?.IsPlaying == true ? MatIconNames.Pause : MatIconNames.Play_arrow)" Disabled="State.Value?.CurrentSong == null" OnClick="TogglePlay"></MatIconButton>
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center">
+            <MatIconButton Icon="@MatIconNames.Skip_next" Disabled="(State.Value?.CurrentSong == null || !State.Value.NextSongs.Any())" OnClick="Next"></MatIconButton>
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1">
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center align-items-center">
+            @State.Value.Elapsed.ToDurationString() / @((State.Value.CurrentSong?.Duration ?? default).ToDurationString())
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+            <MySlider Value="@State.Value.Elapsed.TotalMilliseconds" Discrete="true" Pin="true" ValueMin="0d" ValueMax="@((State.Value.CurrentSong?.Duration ?? default).TotalMilliseconds)" TValue="double"></MySlider>
+        </div>
     </div>
 </div>
-<MySlider Value="@State.Value.Elapsed.TotalMilliseconds" Discrete="true" Pin="true" ValueMin="0d" ValueMax="@((State.Value.CurrentSong?.Duration ?? default).TotalMilliseconds)" TValue="double"></MySlider>
 
 @code {
     private static IHubStore _hubStore;
@@ -38,5 +56,10 @@
     private async Task TogglePlay()
     {
         await HubStore.ToggleSong();
+    }
+
+    private async Task ToggleMute(bool muted)
+    {
+        await _hubStore.ToggleMute(muted, State.Value.CurrentSong?.Type ?? PlayerType.None);
     }
 }
