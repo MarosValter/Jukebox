@@ -1,4 +1,5 @@
-﻿@using Jukebox.Player.Base
+﻿@using System.Threading
+@using Jukebox.Player.Base
 
 @inherits Fluxor.Blazor.Web.Components.FluxorComponent
 
@@ -21,38 +22,63 @@
             <MatChip Class="@(_mouseOverVolume ? "" : "d-none")" Label="@State.Value.Volume.ToString()"></MatChip>
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1">
+
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1 d-flex justify-content-end">
-            <MatIconButton Icon="@MatIconNames.Skip_previous" Disabled="(State.Value?.CurrentSong == null || !State.Value.PreviousSongs.Any())" OnClick="Previous"></MatIconButton>
+            <MatIconButton Icon="@MatIconNames.Skip_previous" Disabled="(State.Value.CurrentSong == null || !State.Value.PreviousSongs.Any())" OnClick="Previous"></MatIconButton>
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center">
-            <MatIconButton Icon="@(State.Value?.IsPlaying == true ? MatIconNames.Pause : MatIconNames.Play_arrow)" Disabled="State.Value?.CurrentSong == null" OnClick="TogglePlay"></MatIconButton>
+            <MatIconButton Toggled="@State.Value.IsPlaying" Icon="@MatIconNames.Play_arrow" ToggleIcon="@MatIconNames.Pause" Disabled="State.Value.CurrentSong == null" OnClick="TogglePlay"></MatIconButton>
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1 d-flex justify-content-start">
-            <MatIconButton Icon="@MatIconNames.Skip_next" Disabled="(State.Value?.CurrentSong == null || !State.Value.NextSongs.Any())" OnClick="Next"></MatIconButton>
+            <MatIconButton Icon="@MatIconNames.Skip_next" Disabled="(State.Value.CurrentSong == null || !State.Value.NextSongs.Any())" OnClick="Next"></MatIconButton>
         </div>
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center align-items-center">
+            @if (State.Value.IsPlaying)
+            {
+                <WaveLoadingBar></WaveLoadingBar>
+            }
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-end align-items-center">
-            <MatFAB Label="@($"{State.Value.Elapsed.ToDurationString()} / {((State.Value.CurrentSong?.Duration ?? default).ToDurationString())}")"></MatFAB>
+            <MatFAB Label="@($"{TimeSpan.FromMilliseconds(Position).ToDurationString()} / {((State.Value.CurrentSong?.Duration ?? default).ToDurationString())}")"></MatFAB>
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-            <MySlider Value="@State.Value.Elapsed.TotalMilliseconds" Discrete="true" ValueMin="0d" ValueMax="@((State.Value.CurrentSong?.Duration ?? default).TotalMilliseconds)" TValue="double"></MySlider>
+            <MySlider Discrete="true"
+                      Immediate="true"
+                      TValue="double"
+                      Value="@Position"
+                      ValueMin="0d"
+                      ValueMax="@((State.Value.CurrentSong?.Duration ?? default).TotalMilliseconds)"
+                      ValueChanged="@PositionChanged"
+                      @onmousedown="@PositionChangeStart"
+                      @onmouseup="@PositionChangeEnd"></MySlider>
         </div>
     </div>
 </div>
 
 @code {
+    private bool _positionChanging;
+    private double _position;
+
     private bool _volumeRendered;
     private bool _mouseOverVolume;
-    private System.Threading.CancellationTokenSource _cancellationToken;
+
+    private CancellationTokenSource _cancellationToken;
 
     private static IHubStore _hubStore;
+
+    protected double Position => _positionChanging ? _position : State.Value.Elapsed.TotalMilliseconds;
 
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
         _hubStore = HubStore;
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        State.StateChanged += PlaylistStateChanged;
     }
 
     [JSInvokable("Controls.Previous")]
@@ -74,7 +100,7 @@
 
     private async Task ToggleMute(bool muted)
     {
-        await _hubStore.ToggleMute(muted, State.Value.CurrentSong?.Type ?? PlayerType.None);
+        await HubStore.ToggleMute(muted, State.Value.CurrentSong?.Type ?? PlayerType.None);
     }
 
     private void MouseOverVolume(MouseEventArgs args)
@@ -111,7 +137,44 @@
     {
         if (!State.Value.IsMuted || volume > 0)
         {
-            await _hubStore.VolumeChanged(volume, State.Value.CurrentSong?.Type ?? PlayerType.None);
+            await HubStore.ChangeVolume(volume, State.Value.CurrentSong?.Type ?? PlayerType.None);
+        }
+    }
+
+    private void PositionChangeStart(MouseEventArgs args)
+    {
+        _position = State.Value.Elapsed.TotalMilliseconds;
+        _positionChanging = true;
+    }
+
+    private async Task PositionChangeEnd(MouseEventArgs args)
+    {
+        await HubStore.ChangeSongElapsed(TimeSpan.FromMilliseconds(_position));
+    }
+
+    private void PositionChanged(double position)
+    {
+        if (_positionChanging)
+        {
+            _position = position;
+        }
+    }
+
+    private void PlaylistStateChanged(object sender, PlaylistState state)
+    {
+        // to prevent slider from jumping when waiting for updated elapsed time
+        if (_positionChanging && Math.Abs(_position - State.Value.Elapsed.TotalMilliseconds) < 1000)
+        {
+            _positionChanging = false;
+        }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            State.StateChanged -= PlaylistStateChanged;
         }
     }
 }

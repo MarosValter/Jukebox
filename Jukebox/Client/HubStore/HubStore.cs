@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace Jukebox.Client.HubStore
 {
+    //TODO try/catch all HubConnection calls
     public class HubStore : IHubStore
     {
         protected string RoomName { get; private set; }
@@ -41,6 +42,7 @@ namespace Jukebox.Client.HubStore
             HubConnection.On<SongInfo>("SongRemoved", SongRemoved);
             HubConnection.On<SongInfo>("SongChanged", SongChanged);
             HubConnection.On<PlayerState, PlayerType>("PlayerStateChanged", PlayerStateChanged);
+            HubConnection.On<TimeSpan, PlayerType>("SongPositionChanged", SongPositionChanged);
 
             HubConnection.Closed += OnConnectionClosed;
 
@@ -81,7 +83,7 @@ namespace Jukebox.Client.HubStore
 
         public async Task ChangeSongElapsed(TimeSpan elapsed)
         {
-            //await HubConnection.SendAsync("")
+            await HubConnection.SendAsync("ChangeSongPosition", RoomName, elapsed);
         }
 
         public Task ToggleMute(bool muted, PlayerType type)
@@ -90,7 +92,7 @@ namespace Jukebox.Client.HubStore
             return Task.CompletedTask;
         }
 
-        public Task VolumeChanged(int volume, PlayerType type)
+        public Task ChangeVolume(int volume, PlayerType type)
         {
             Dispatcher.Dispatch(new VolumeChangedAction(volume, type));
             return Task.CompletedTask;
@@ -136,7 +138,6 @@ namespace Jukebox.Client.HubStore
         private void SongChanged(SongInfo song)
         {
             Dispatcher.Dispatch(new SongChangedAction(song));
-            //Dispatcher.Dispatch(new StateChangedAction(PlayerState.Playing, song.Type));
         }
 
         private void PlayerStateChanged(PlayerState state, PlayerType type)
@@ -144,14 +145,19 @@ namespace Jukebox.Client.HubStore
             Dispatcher.Dispatch(new StateChangedAction(state, type));
         }
 
-        private async Task OnConnectionClosed(Exception e)
+        private void SongPositionChanged(TimeSpan elapsed, PlayerType type)
         {
-
+            Dispatcher.Dispatch(new SeekToAction(elapsed, type));
         }
 
         private void OnSongElapsedChanged(object sender, TimeSpan elapsed)
         {
             Dispatcher.Dispatch(new ElapsedChangedAction(elapsed));
+        }
+
+        private async Task OnConnectionClosed(Exception e)
+        {
+
         }
 
         public async ValueTask DisposeAsync()

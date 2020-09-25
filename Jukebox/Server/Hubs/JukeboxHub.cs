@@ -113,5 +113,12 @@ namespace Jukebox.Server.Hubs
             await _playlistManager.ChangeSong(room.Playlist, song);
             await Clients.Group(roomName).SongChanged(song);
         }
+
+        public async Task ChangeSongPosition(string roomName, TimeSpan elapsed)
+        {
+            var room = await _roomStorage.GetOrCreateRoomAsync(roomName);
+            //TODO
+            await Clients.Group(roomName).SongPositionChanged(elapsed, room.Playlist.CurrentSong.Type);
+        }
     }
 }

@@ -1,0 +1,55 @@
+﻿
+<style @ref="@_style">
+    .wave-loading {
+        height: 30px;
+        width: @(BarCount * 4 + 2)px;
+        position: absolute;
+    }
+
+    .wave-loading > span {
+        background-color: var(--mdc-theme-secondary, #018786);
+        bottom: 1px;
+        height: 3px;
+        position: absolute;
+        width: 3px;
+        animation: sound 0ms -800ms linear infinite alternate;
+    }
+
+    @@keyframes sound {
+        0% {
+            opacity: .35;
+            height: 3px;
+        }
+
+        100% {
+            opacity: 1;
+            height: 28px;
+        }
+    }
+
+    @for (var i = 0; i < BarCount; ++i)
+    {
+        @($@".wave-loading > span:nth-child({i + 1}) {{
+            left: {i * 4 + 1}px;
+            animation-duration: {_rand.Next(400, 500)}ms;
+        }}")
+    }
+</style>
+
+<div class="wave-loading" style="@_style">
+    @for (var i = 0; i < BarCount; ++i)
+    {
+        <span></span>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int BarCount { get; set; } = 10;
+
+    [Parameter]
+    public bool Enabled { get; set; } = true;
+
+    private object _style;
+    private Random _rand = new Random();
+}

@@ -13,7 +13,7 @@ namespace Jukebox.Shared.Client
         Task SongAdded(SongInfo song);
         Task SongRemoved(SongInfo song);
         Task SongChanged(SongInfo song);
-        Task SongPositionChanged(TimeSpan duration);
+        Task SongPositionChanged(TimeSpan duration, PlayerType type);
         Task PlayerStateChanged(PlayerState state, PlayerType type);
     }
 }
