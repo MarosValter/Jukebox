@@ -33,17 +33,13 @@ namespace Jukebox.Client.Components
 
         protected override void OnValueChanged(TValue value, bool changed)
         {
-            Console.WriteLine($"Value changed: {0}", changed);
-            Console.WriteLine($"Rendered: {0}", Rendered);
             if (changed && Rendered)
             {
                 InvokeAsync(async () =>
                 {
                     try
                     {
-                        Console.WriteLine("Before update");
                         await Js.InvokeVoidAsync("JukeboxComponents.mySlider.updateValue", Ref, value);
-                        Console.WriteLine("After update");
                     }
                     catch (Exception e)
                     {

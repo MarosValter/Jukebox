@@ -7,32 +7,46 @@
 
 <div class="mat-layout-grid">
     <div class="mat-layout-grid-inner">
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center">
-            <MatIconButton Icon="@MatIconNames.Volume_up" ToggleIcon="@MatIconNames.Volume_off" ToggledChanged="@ToggleMute"></MatIconButton>
+        <div style="margin-left: -1rem; margin-right: -1rem;" class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-start align-items-center">
+            <MatIconButton Icon="@MatIconNames.Volume_up" ToggleIcon="@MatIconNames.Volume_off" Toggled="@State.Value.IsMuted" ToggledChanged="@ToggleMute" @onmouseover="@MouseOverVolume" @onmouseout="@MouseOutVolume"></MatIconButton>
+            @if (_volumeRendered || _mouseOverVolume)
+            {
+                _volumeRendered = true;
+                <div class="ml-2 @(_mouseOverVolume ? "" : "d-none")" style="width: 100%;" @onmouseover="@MouseOverVolume" @onmouseout="@MouseOutVolume">
+                    <MySlider TValue="int" Value="@State.Value.Volume" ValueChanged="@VolumeChanged" ValueMin="0" ValueMax="100" Discrete="true" Immediate="true"></MySlider>
+                </div>
+            }
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1 d-flex justify-content-start align-items-center">
+            <MatChip Class="@(_mouseOverVolume ? "" : "d-none")" Label="@State.Value.Volume.ToString()"></MatChip>
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1">
         </div>
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1 d-flex justify-content-end">
             <MatIconButton Icon="@MatIconNames.Skip_previous" Disabled="(State.Value?.CurrentSong == null || !State.Value.PreviousSongs.Any())" OnClick="Previous"></MatIconButton>
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center">
             <MatIconButton Icon="@(State.Value?.IsPlaying == true ? MatIconNames.Pause : MatIconNames.Play_arrow)" Disabled="State.Value?.CurrentSong == null" OnClick="TogglePlay"></MatIconButton>
         </div>
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1 d-flex justify-content-start">
             <MatIconButton Icon="@MatIconNames.Skip_next" Disabled="(State.Value?.CurrentSong == null || !State.Value.NextSongs.Any())" OnClick="Next"></MatIconButton>
         </div>
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
         </div>
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-center align-items-center">
-            @State.Value.Elapsed.ToDurationString() / @((State.Value.CurrentSong?.Duration ?? default).ToDurationString())
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2 d-flex justify-content-end align-items-center">
+            <MatFAB Label="@($"{State.Value.Elapsed.ToDurationString()} / {((State.Value.CurrentSong?.Duration ?? default).ToDurationString())}")"></MatFAB>
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-            <MySlider Value="@State.Value.Elapsed.TotalMilliseconds" Discrete="true" Pin="true" ValueMin="0d" ValueMax="@((State.Value.CurrentSong?.Duration ?? default).TotalMilliseconds)" TValue="double"></MySlider>
+            <MySlider Value="@State.Value.Elapsed.TotalMilliseconds" Discrete="true" ValueMin="0d" ValueMax="@((State.Value.CurrentSong?.Duration ?? default).TotalMilliseconds)" TValue="double"></MySlider>
         </div>
     </div>
 </div>
 
 @code {
+    private bool _volumeRendered;
+    private bool _mouseOverVolume;
+    private System.Threading.CancellationTokenSource _cancellationToken;
+
     private static IHubStore _hubStore;
 
     protected override void OnParametersSet()
@@ -61,5 +75,43 @@
     private async Task ToggleMute(bool muted)
     {
         await _hubStore.ToggleMute(muted, State.Value.CurrentSong?.Type ?? PlayerType.None);
+    }
+
+    private void MouseOverVolume(MouseEventArgs args)
+    {
+        if (_cancellationToken != null)
+        {
+            _cancellationToken.Cancel();
+        }
+        _mouseOverVolume = true;
+    }
+
+    private async Task MouseOutVolume(MouseEventArgs args)
+    {
+        _cancellationToken = new System.Threading.CancellationTokenSource();
+        try
+        {
+            await Task.Delay(300, _cancellationToken.Token);
+        }
+        catch (TaskCanceledException) when (_cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
+        if (!_cancellationToken.IsCancellationRequested)
+        {
+            var token = _cancellationToken;
+            _cancellationToken = null;
+            _mouseOverVolume = false;
+            token.Dispose();
+        }
+    }
+
+    private async Task VolumeChanged(int volume)
+    {
+        if (!State.Value.IsMuted || volume > 0)
+        {
+            await _hubStore.VolumeChanged(volume, State.Value.CurrentSong?.Type ?? PlayerType.None);
+        }
     }
 }

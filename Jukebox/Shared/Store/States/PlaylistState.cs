@@ -12,21 +12,38 @@ namespace Jukebox.Shared.Store.States
         public DateTime? Started { get; }
         public TimeSpan Elapsed { get; }
 
+        public bool IsMuted { get; }
+        public int Volume { get; }
+
         public SongInfo CurrentSong { get; }
         public List<SongInfo> AllSongs { get; }
 
         public IReadOnlyCollection<SongInfo> PreviousSongs => CurrentSong == null ? new ReadOnlyCollection<SongInfo>(new List<SongInfo>()) : AllSongs.Take(AllSongs.FindIndex(x => x.Id == CurrentSong.Id)).ToList().AsReadOnly();
         public IReadOnlyCollection<SongInfo> NextSongs => CurrentSong == null ? AllSongs.AsReadOnly() : AllSongs.Skip(AllSongs.FindIndex(x => x.Id == CurrentSong.Id) + 1).ToList().AsReadOnly();
 
-        public PlaylistState(List<SongInfo> allSongs, SongInfo currentSong = null, bool isPlaying = false, DateTime? started = default, TimeSpan elapsed = default)
+        public PlaylistState(
+            List<SongInfo> allSongs,
+            SongInfo currentSong = null,
+            bool isPlaying = false,
+            DateTime? started = default,
+            TimeSpan elapsed = default,
+            bool isMuted = false,
+            int volume = 100)
         {
             AllSongs = allSongs ?? new List<SongInfo>();
             CurrentSong = currentSong;
             IsPlaying = currentSong != null && isPlaying;
             Started = started;
             Elapsed = elapsed;
+            IsMuted = isMuted;
+            Volume = volume;
         }
 
-        public PlaylistState(PlaylistInfo playlist) : this(playlist?.AllSongs, playlist?.CurrentSong, playlist?.IsPlaying ?? false, playlist?.Started, playlist?.Elapsed ?? default) { }
+        public PlaylistState(PlaylistInfo playlist): this(
+            playlist?.AllSongs,
+            playlist?.CurrentSong,
+            playlist?.IsPlaying ?? false,
+            playlist?.Started,
+            playlist?.Elapsed ?? default) { }
     }
 }

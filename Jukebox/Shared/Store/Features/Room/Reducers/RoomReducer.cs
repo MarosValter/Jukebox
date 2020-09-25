@@ -9,9 +9,7 @@ namespace Jukebox.Shared.Store.Features.Room.Reducers
     {
         [ReducerMethod]
         public static RoomState ReduceRoomEnteredAction(RoomState state, RoomEnteredAction action)
-        {
-            return new RoomState(action.Room.Name, action.ConnectionId, action.Room.CurrentUser, action.Room.Users);
-        }
+            => new RoomState(action.Room.Name, action.ConnectionId, action.Room.CurrentUser, action.Room.Users);
 
         [ReducerMethod]
         public static RoomState ReduceUserAddedAction(RoomState state, UserAddedAction action)

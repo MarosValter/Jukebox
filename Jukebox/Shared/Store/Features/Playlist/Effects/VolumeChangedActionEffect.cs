@@ -5,16 +5,16 @@ using System.Threading.Tasks;
 
 namespace Jukebox.Shared.Store.Features.Playlist.Effects
 {
-    public class MuteChangedActionEffect : Effect<MuteChangedAction>
+    public class VolumeChangedActionEffect : Effect<VolumeChangedAction>
     {
         private readonly IPlayerManager _playerManager;
 
-        public MuteChangedActionEffect(IPlayerManager playerManager)
+        public VolumeChangedActionEffect(IPlayerManager playerManager)
         {
             _playerManager = playerManager;
         }
 
-        protected override async Task HandleAsync(MuteChangedAction action, IDispatcher dispatcher)
+        protected override async Task HandleAsync(VolumeChangedAction action, IDispatcher dispatcher)
         {
             var player = _playerManager.GetPlayer(action.Type);
             while (!(await player.IsReady()))
@@ -22,14 +22,10 @@ namespace Jukebox.Shared.Store.Features.Playlist.Effects
                 await Task.Delay(100);
             }
 
-            if (action.IsMuted)
-            {
-                await player.Mute();
-            }
-            else
+            await player.SetVolume(action.Volume);
+            if (await player.IsMuted())
             {
                 await player.UnMute();
-                dispatcher.Dispatch(new VolumeChangedAction(await player.GetVolume(), action.Type));
             }
         }
     }

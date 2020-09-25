@@ -17,5 +17,6 @@ namespace Jukebox.Client.HubStore
         Task ChangeSong(SongInfo song);
         Task ChangeSongElapsed(TimeSpan elapsed);
         Task ToggleMute(bool muted, PlayerType type);
+        Task VolumeChanged(int volume, PlayerType type);
     }
 }

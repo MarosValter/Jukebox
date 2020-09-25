@@ -90,6 +90,12 @@ namespace Jukebox.Client.HubStore
             return Task.CompletedTask;
         }
 
+        public Task VolumeChanged(int volume, PlayerType type)
+        {
+            Dispatcher.Dispatch(new VolumeChangedAction(volume, type));
+            return Task.CompletedTask;
+        }
+
 
         private async Task EneterRoom(string userName)
         {
