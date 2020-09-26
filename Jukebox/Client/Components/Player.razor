@@ -4,7 +4,9 @@
 
 @inject IState<Jukebox.Shared.Store.States.PlaylistState> State
 
-@if (State.Value?.CurrentSong?.Type == PlayerType.YouTube)
-{
-    <YouTubePlayer></YouTubePlayer>
-}
+<div class="video-container">
+    @if (State.Value?.CurrentSong?.Type == PlayerType.YouTube)
+    {
+        <YouTubePlayer></YouTubePlayer>
+    }
+</div>
