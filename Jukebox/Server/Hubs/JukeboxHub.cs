@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Jukebox.Player.Base;
 using Jukebox.Server.PlaylistManager;
 using Jukebox.Server.Storage;
 using Jukebox.Shared.Client;
@@ -20,10 +19,15 @@ namespace Jukebox.Server.Hubs
             _playlistManager = playlistManager;
         }
 
-        public override Task OnDisconnectedAsync(Exception exception)
+        public override async Task OnDisconnectedAsync(Exception exception)
         {
-            
-            return base.OnDisconnectedAsync(exception);
+            var rooms = await _roomStorage.GetUserRooms(Context.ConnectionId);
+            foreach(var room in rooms)
+            {
+                await LeaveRoom(room.Name);
+            }
+
+            await base.OnDisconnectedAsync(exception);
         }
 
         public async Task<RoomEnteredResult> EnterRoom(string roomName, string userName)

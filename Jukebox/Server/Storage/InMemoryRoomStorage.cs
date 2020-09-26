@@ -11,6 +11,11 @@ namespace Jukebox.Server.Storage
     {
         private readonly ConcurrentDictionary<string, RoomInfo> _rooms = new ConcurrentDictionary<string, RoomInfo>();
 
+        public Task<IList<RoomInfo>> GetUserRooms(string connectionId)
+        {
+            return Task.FromResult((IList<RoomInfo>)_rooms.Values.Where(x => x.Users.Any(y => y.ConnectionId == connectionId)).ToList());
+        }
+
         public Task<RoomInfo> GetOrCreateRoomAsync(string roomName)
         {
             var room = _rooms.GetOrAdd(roomName, name => new RoomInfo
