@@ -22,9 +22,28 @@ namespace Jukebox.Server.Storage
             {
                 Name = name,
                 Users = new List<UserInfo>(),
-                Playlist = new PlaylistInfo()
+                Playlist = new PlaylistInfo(),
+                ChatMessages = new List<ChatMessageInfo>()
             });
             return Task.FromResult(room);
+        }
+
+        public Task<bool> AddMessageAsync(string roomName, ChatMessageInfo message)
+        {
+            if (!_rooms.ContainsKey(roomName))
+            {
+                throw new InvalidOperationException("Room not found.");
+            }
+
+            bool result;
+            var room = _rooms[roomName];
+            lock (room)
+            {
+                room.ChatMessages.Add(message);
+                result = true;
+            }
+
+            return Task.FromResult(result);
         }
 
         public Task<bool> AddUserAsync(string roomName, UserInfo user)

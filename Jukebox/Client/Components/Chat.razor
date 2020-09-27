@@ -1,0 +1,58 @@
+﻿@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+@inject IHubStore HubStore
+@inject IState<Jukebox.Shared.Store.States.RoomState> State
+
+<MatList>
+    @if (State.Value != null)
+    {
+            foreach (var m in State.Value.ChatMessages)
+            {
+                <MatListItem Disabled="true">
+                    <MatListItemText>
+                        <MatListItemPrimaryText>@m.UserName</MatListItemPrimaryText>
+                        <MatListItemSecondaryText>@m.Message</MatListItemSecondaryText>
+                    </MatListItemText>
+                </MatListItem>
+                @*if (m < State.Value.ChatMessages.Count - 1)
+                    {
+                        <MatDivider></MatDivider>
+                    }*@
+            }
+
+        <fieldset>
+            <div class="form-group">
+                <MatTextField @bind-Value="@_messageParameters.Message" Label="Message" FullWidth="true" Required="true"></MatTextField>
+            </div>
+            <div class="form-group">
+                <MatButton Icon="@MatIconNames.Search" OnClick="@AddMessage" Raised="true">Send</MatButton>
+            </div>
+        </fieldset>
+
+    }
+</MatList>
+
+@code {
+    [Parameter]
+    public string Message { get; set; }
+
+    private readonly ChatMessageParameters _messageParameters = new ChatMessageParameters();
+
+    public class ChatMessageParameters
+    {
+        public string Message { get; set; }
+    }
+    private async Task AddMessage()
+    {
+        var message = new Jukebox.Shared.Player.ChatMessageInfo
+        {
+            Message = _messageParameters.Message,
+            SentWhen = DateTime.Now,
+            UserName = State.Value?.CurrentUser.Name
+
+        };
+
+        _messageParameters.Message = string.Empty;
+        await HubStore.AddMessage(message);
+    }
+}

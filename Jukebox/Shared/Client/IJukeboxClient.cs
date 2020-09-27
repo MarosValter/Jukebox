@@ -9,7 +9,7 @@ namespace Jukebox.Shared.Client
     {
         Task UserAdded(UserInfo user);
         Task UserRemoved(string connectionId);
-
+        Task MessageAdded(ChatMessageInfo message);
         Task SongAdded(SongInfo song);
         Task SongRemoved(SongInfo song);
         Task SongChanged(SongInfo song);

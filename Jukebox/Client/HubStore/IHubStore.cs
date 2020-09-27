@@ -9,6 +9,7 @@ namespace Jukebox.Client.HubStore
     public interface IHubStore : IAsyncDisposable
     {
         Task Initialize(IDispatcher dispatcher, Uri hubUrl, string roomName, string userName);
+        Task AddMessage(ChatMessageInfo message);
         Task AddSong(SongInfo song);
         Task RemoveSong(SongInfo song);
         Task NextSong();

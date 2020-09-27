@@ -38,6 +38,7 @@ namespace Jukebox.Client.HubStore
 
             HubConnection.On<UserInfo>("UserAdded", UserAdded);
             HubConnection.On<string>("UserRemoved", UserRemoved);
+            HubConnection.On<ChatMessageInfo>("MessageAdded", MessageAdded);
             HubConnection.On<SongInfo>("SongAdded", SongAdded);
             HubConnection.On<SongInfo>("SongRemoved", SongRemoved);
             HubConnection.On<SongInfo>("SongChanged", SongChanged);
@@ -49,6 +50,11 @@ namespace Jukebox.Client.HubStore
             await HubConnection.StartAsync();
 
             await EneterRoom(userName);
+        }
+
+        public async Task AddMessage(ChatMessageInfo message)
+        {
+            await HubConnection.SendAsync("AddMessage", RoomName, message);
         }
 
         public async Task AddSong(SongInfo song)
@@ -128,6 +134,11 @@ namespace Jukebox.Client.HubStore
         private void SongAdded(SongInfo song)
         {
             Dispatcher.Dispatch(new SongAddedAction(song));
+        }
+
+        private void MessageAdded(ChatMessageInfo message)
+        {
+            Dispatcher.Dispatch(new ChatMessageAddedAction(message));
         }
 
         private void SongRemoved(SongInfo song)

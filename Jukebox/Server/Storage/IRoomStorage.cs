@@ -11,5 +11,6 @@ namespace Jukebox.Server.Storage
 
         Task<bool> AddUserAsync(string roomName, UserInfo user);
         Task<bool> RemoveUserAsync(string roomName, string connectionId);
+        Task<bool> AddMessageAsync(string roomName, ChatMessageInfo message);
     }
 }

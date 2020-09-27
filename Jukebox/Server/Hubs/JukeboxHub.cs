@@ -63,6 +63,15 @@ namespace Jukebox.Server.Hubs
             }
         }
 
+        public async Task AddMessage(string roomName, ChatMessageInfo message)
+        {
+            var result = await _roomStorage.AddMessageAsync(roomName, message);
+            if (result)
+            {
+                await Clients.Group(roomName).MessageAdded(message);
+            }
+        }
+
         public async Task AddSong(string roomName, SongInfo song)
         {
             var room = await _roomStorage.GetOrCreateRoomAsync(roomName);
