@@ -5,7 +5,7 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1.402-buster-arm32v7 AS build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
 COPY ["Server/Jukebox.Server.csproj", "Server/"]
 COPY ["Shared/Jukebox.Shared.csproj", "Shared/"]
@@ -15,10 +15,10 @@ COPY ["Client/Jukebox.Client.csproj", "Client/"]
 RUN dotnet restore "Server/Jukebox.Server.csproj"
 COPY . .
 WORKDIR "/src/Server"
-RUN dotnet build "Jukebox.Server.csproj" -c Release -o /app/build
+RUN dotnet build "Jukebox.Server.csproj" -c Release -r linux-arm -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Jukebox.Server.csproj" -c Release -o /app/publish
+RUN dotnet publish "Jukebox.Server.csproj" -c Release -r linux-arm -o /app/publish
 
 FROM base AS final
 WORKDIR /app
