@@ -7,12 +7,12 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
-COPY ["Server/Jukebox.Server.csproj", "Server/"]
-COPY ["Shared/Jukebox.Shared.csproj", "Shared/"]
-COPY ["Jukebox.Player/Jukebox.Player.csproj", "Jukebox.Player/"]
-COPY ["Jukebox.Player.YouTube/Jukebox.Player.YouTube.csproj", "Jukebox.Player.YouTube/"]
-COPY ["Client/Jukebox.Client.csproj", "Client/"]
-RUN dotnet restore "Server/Jukebox.Server.csproj"
+COPY ["../Server/Jukebox.Server.csproj", "Server/"]
+COPY ["../Shared/Jukebox.Shared.csproj", "Shared/"]
+COPY ["../Jukebox.Player/Jukebox.Player.csproj", "Jukebox.Player/"]
+COPY ["../Jukebox.Player.YouTube/Jukebox.Player.YouTube.csproj", "Jukebox.Player.YouTube/"]
+COPY ["../Client/Jukebox.Client.csproj", "Client/"]
+RUN dotnet restore "Jukebox.Server.csproj"
 COPY . .
 WORKDIR "/src/Server"
 RUN dotnet build "Jukebox.Server.csproj" -c Release -o /app/build
