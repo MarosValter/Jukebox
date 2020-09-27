@@ -10,7 +10,7 @@
             {
                 <MatListItem Disabled="true">
                     <MatListItemText>
-                        <MatListItemPrimaryText>@m.UserName</MatListItemPrimaryText>
+                        <MatListItemPrimaryText>@GetSenderString(m) (@m.SentWhen.ToString("HH:mm"))</MatListItemPrimaryText>
                         <MatListItemSecondaryText>@m.Message</MatListItemSecondaryText>
                     </MatListItemText>
                 </MatListItem>
@@ -22,7 +22,8 @@
 
         <fieldset>
             <div class="form-group">
-                <MatTextField @bind-Value="@_messageParameters.Message" Label="Message" FullWidth="true" Required="true"></MatTextField>
+                <MatTextField @bind-Value="@_messageParameters.Message" Label="Message" FullWidth="true"></MatTextField>
+                <MatTextField @bind-Value="@_messageParameters.TargetUsername" Label="Whisper to (leave blank if public):" FullWidth="true"></MatTextField>
             </div>
             <div class="form-group">
                 <MatButton Icon="@MatIconNames.Search" OnClick="@AddMessage" Raised="true">Send</MatButton>
@@ -41,6 +42,7 @@
     public class ChatMessageParameters
     {
         public string Message { get; set; }
+        public string TargetUsername { get; set; }
     }
     private async Task AddMessage()
     {
@@ -48,11 +50,25 @@
         {
             Message = _messageParameters.Message,
             SentWhen = DateTime.Now,
-            UserName = State.Value?.CurrentUser.Name
-
+            Sender = State.Value?.CurrentUser,
+            Reciever = State.Value?.Users.FirstOrDefault(x => x.Name == _messageParameters.TargetUsername),
         };
 
         _messageParameters.Message = string.Empty;
+        _messageParameters.TargetUsername = string.Empty;
         await HubStore.AddMessage(message);
+    }
+
+    private string GetSenderString(Jukebox.Shared.Player.ChatMessageInfo message)
+    {
+        if (message.Sender.ConnectionId == State.Value?.ConnectionId && message.Reciever != null)
+        {
+            return "Whisper to " + message.Reciever.Name;
+        }
+        else if (message.Reciever?.ConnectionId == State.Value?.ConnectionId)
+        {
+            return "Whisper from " + message.Sender.Name;
+        }
+        return message.Sender.Name;
     }
 }

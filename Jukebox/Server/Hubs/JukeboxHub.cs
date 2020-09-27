@@ -68,7 +68,12 @@ namespace Jukebox.Server.Hubs
             var result = await _roomStorage.AddMessageAsync(roomName, message);
             if (result)
             {
-                await Clients.Group(roomName).MessageAdded(message);
+                var client = Clients.Group(roomName);
+                if (message.Reciever != null)
+                {
+                    client = Clients.Clients(message.Reciever.ConnectionId, Context.ConnectionId);
+                }
+                await client.MessageAdded(message);
             }
         }
 

@@ -6,7 +6,8 @@ namespace Jukebox.Shared.Player
 {
     public class ChatMessageInfo
     {
-        public string UserName { get; set; }
+        public UserInfo Sender { get; set; }
+        public UserInfo Reciever { get; set; }
         public string Message { get; set; }
         public DateTime SentWhen { get; set; }
     }
