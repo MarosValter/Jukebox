@@ -38,5 +38,4 @@ stages:
         command: 'buildAndPush'
         dockerfile: '$(Build.SourcesDirectory)/Jukebox/Dockerfile.arm'
         tags: |
-          $(tag)
-          ARM
+          ARM-$(tag)
