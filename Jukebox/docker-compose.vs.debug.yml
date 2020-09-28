@@ -1,8 +1,0 @@
-version: '3.4'
-
-services:
-  jukebox.server:
-    environment:
-      - CLIENT_APP_ASSEMBLY_PATH_OVERRIDE=/Client
-    volumes:
-      - ./Jukebox/Client:/Client
