@@ -10,6 +10,7 @@ using Jukebox.Player.Manager;
 using Jukebox.Player.Search;
 using Jukebox.Player.YouTube.Extensions;
 using Jukebox.Shared.Store.States;
+using MatBlazor;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -49,6 +50,13 @@ namespace Jukebox.Client
             services.AddSingleton<IPlayerManager, PlayerManager>();
             services.AddSingleton<IHubStore, HubStore.HubStore>();
             services.AddYouTube();
+
+            services.AddMatToaster(options =>
+            {
+                options.MaxDisplayedToasts = 3;
+                options.Position = MatToastPosition.BottomRight;
+                //options.VisibleStateDuration = 3000;
+            });
         }
     }
 }

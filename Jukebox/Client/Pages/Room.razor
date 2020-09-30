@@ -1,11 +1,13 @@
 ﻿@page "/{roomName}/{userName}"
 
+@using Microsoft.AspNetCore.SignalR.Client
 @using Jukebox.Player.Base
 
 @implements IAsyncDisposable
 
 @inject IHubStore HubStore
 @inject IDispatcher Dispatcher
+@inject IMatToaster Toaster
 @inject NavigationManager NavigationManager
 
 <MatH2 Class="text-center pb-5">Room: @RoomName</MatH2>
@@ -13,11 +15,6 @@
 <div class="mat-layout-grid">
     <div class="mat-layout-grid-inner">
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
-            @*<div class="mat-layout-grid-inner">
-                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12 mat-elevation-z6">
-                    <Controls></Controls>
-                </div>
-                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12 mat-elevation-z6">*@
             <div class="mat-elevation-z3">
                 <Controls></Controls>
             </div>
@@ -31,8 +28,6 @@
                     </MatExpansionPanelDetails>
                 </MatExpansionPanel>
             </MatAccordion>
-            @*</div>
-                <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12 mat-elevation-z6">*@
             <MatAccordion Class="mat-elevation-z6">
                 <MatExpansionPanel @bind-Expanded="@_playlistOpened">
                     <MatExpansionPanelSummary>
@@ -43,8 +38,6 @@
                     </MatExpansionPanelDetails>
                 </MatExpansionPanel>
             </MatAccordion>
-            @*</div>
-                </div>*@
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
             <MatTabGroup Class="mat-elevation-z6">
@@ -57,9 +50,9 @@
                 <MatTab Label="YouTube">
                     <SearchList Type="@PlayerType.YouTube"></SearchList>
                 </MatTab>
-                <MatTab Label="Spotify">
+                @*<MatTab Label="Spotify">
 
-                </MatTab>
+                </MatTab>*@
             </MatTabGroup>
         </div>
     </div>
@@ -72,16 +65,60 @@
     [Parameter]
     public string UserName { get; set; }
 
+    private MatToast _reconnecting;
     private bool _playlistOpened;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        await HubStore.Initialize(Dispatcher, NavigationManager.ToAbsoluteUri("/jukeboxHub"), RoomName, UserName);
+        await HubStore.Initialize(Dispatcher, new HubStoreConfig
+        {
+            HubUrl = NavigationManager.ToAbsoluteUri("/jukeboxHub"),
+            RoomName = RoomName,
+            UserName = UserName,
+            ReconnectInterval = 5000
+        });
+
+        HubStore.StateChanged += HubStateChanged;
+    }
+
+    private Task HubStateChanged(HubConnectionState state)
+    {
+        Console.WriteLine("State changed: {0}", state);
+
+        if (state == HubConnectionState.Disconnected)
+        {
+            if (_reconnecting != null)
+            {
+                Toaster.Remove(_reconnecting);
+                _reconnecting = null;
+            }
+
+            Toaster.Add("Connection lost", MatToastType.Danger, icon: MatIconNames.Sentiment_very_dissatisfied);
+        }
+
+        if (state == HubConnectionState.Reconnecting)
+        {
+            _reconnecting = Toaster.Add("Reconnecting", MatToastType.Warning, configure: options => options.RequireInteraction = true);
+        }
+
+        if (state == HubConnectionState.Connected)
+        {
+            if (_reconnecting != null)
+            {
+                Toaster.Remove(_reconnecting);
+                _reconnecting = null;
+            }
+
+            Toaster.Add("Connected", MatToastType.Success, configure: options => options.VisibleStateDuration = 3000);
+        }
+
+        return Task.CompletedTask;
     }
 
     public async ValueTask DisposeAsync()
     {
+        HubStore.StateChanged -= HubStateChanged;
         await HubStore.DisposeAsync();
         Console.WriteLine("Room leaved");
     }

@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
@@ -9,7 +8,7 @@ using System.Linq;
 using Jukebox.Server.Hubs;
 using Jukebox.Server.PlaylistManager;
 using Jukebox.Server.Storage;
-using Jukebox.Shared.Player;
+using Jukebox.Shared.Serializer;
 
 namespace Jukebox.Server
 {
@@ -30,7 +29,7 @@ namespace Jukebox.Server
             services.AddSingleton<IPlaylistManager, PlaylistManager.PlaylistManager>();
 
             services.AddControllersWithViews();
-            services.AddSignalR().AddJsonProtocol(options => options.PayloadSerializerOptions.Converters.Add(new TimeSpanConverter()));
+            services.AddSignalR().AddJsonProtocol(options => SerializerOptions.ConfigureOptions(options.PayloadSerializerOptions));
             services.AddResponseCompression(options =>
             {
                 options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] {"application/octet-stream"});
@@ -60,7 +59,7 @@ namespace Jukebox.Server
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                //endpoints.MapControllers();
                 endpoints.MapHub<JukeboxHub>("/jukeboxHub");
                 endpoints.MapFallbackToFile("index.html");
             });

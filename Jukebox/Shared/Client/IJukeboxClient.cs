@@ -7,6 +7,7 @@ namespace Jukebox.Shared.Client
 {
     public interface IJukeboxClient
     {
+        Task Connected(string connectionId);
         Task UserAdded(UserInfo user);
         Task UserRemoved(string connectionId);
         Task MessageAdded(ChatMessageInfo message);

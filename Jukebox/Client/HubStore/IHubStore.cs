@@ -1,6 +1,7 @@
 ﻿using Fluxor;
 using Jukebox.Player.Base;
 using Jukebox.Shared.Player;
+using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Threading.Tasks;
 
@@ -8,7 +9,10 @@ namespace Jukebox.Client.HubStore
 {
     public interface IHubStore : IAsyncDisposable
     {
-        Task Initialize(IDispatcher dispatcher, Uri hubUrl, string roomName, string userName);
+        event Func<HubConnectionState, Task> StateChanged;
+        HubConnectionState State { get; }
+
+        Task Initialize(IDispatcher dispatcher, HubStoreConfig config);
         Task AddMessage(ChatMessageInfo message);
         Task AddSong(SongInfo song);
         Task RemoveSong(SongInfo song);

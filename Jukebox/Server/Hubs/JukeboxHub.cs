@@ -30,6 +30,12 @@ namespace Jukebox.Server.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
+        public override async Task OnConnectedAsync()
+        {
+            await Clients.Caller.Connected(Context.ConnectionId);
+            await base.OnConnectedAsync();
+        }
+
         public async Task<RoomEnteredResult> EnterRoom(string roomName, string userName)
         {
             var room = await _roomStorage.GetOrCreateRoomAsync(roomName);

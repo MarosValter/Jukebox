@@ -38,7 +38,19 @@ namespace Jukebox.Player.YouTube.Search
                 maxResults = 5;
             }
 
-            return $"search?order=viewCount&maxResults={maxResults}&q={q}&type=video&videoDefinition=high&key={APIKey}";
+            var param = new Dictionary<string, string>
+            {
+                { "order", "viewCount" },
+                { "maxResults", maxResults.ToString() },
+                { "q", q },
+                { "type", "video" },
+                { "videoDefinition", "high" },
+                { "videoEmbeddable", "true" },
+                { "safeSearch", "strict" },
+                { "key", APIKey },
+            };
+
+            return "search?" + string.Join("&", param.Select(kv => $"{kv.Key}={kv.Value}"));
         }
 
         private static string GetDetailsQuery(string[] ids)
