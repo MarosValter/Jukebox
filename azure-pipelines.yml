@@ -40,4 +40,4 @@ stages:
         dockerfile: '$(Build.SourcesDirectory)/Jukebox/Dockerfile.arm'
         tags: |
           ARM-$(tag)
-          latest
+          ARM-latest
