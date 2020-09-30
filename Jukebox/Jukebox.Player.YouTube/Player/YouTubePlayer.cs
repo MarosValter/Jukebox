@@ -85,12 +85,12 @@ namespace Jukebox.Player.YouTube.Player
 
         public override async Task<TimeSpan> GetElapsedTime()
         {
-            return TimeSpan.FromSeconds(await _jsRuntime.InvokeAsync<double>($"{PlayerName}.player.getCurrentTime"));
+            return TimeSpan.FromSeconds(await _jsRuntime.InvokeAsync<double?>($"{PlayerName}.player.getCurrentTime") ?? 0);
         }
 
         public override async Task<TimeSpan> GetDuration()
         {
-            return TimeSpan.FromSeconds(await _jsRuntime.InvokeAsync<double>($"{PlayerName}.player.getDuration"));
+            return TimeSpan.FromSeconds(await _jsRuntime.InvokeAsync<double?>($"{PlayerName}.player.getDuration") ?? 0);
         }
 
         public override async Task QueueMediaById(string id)
